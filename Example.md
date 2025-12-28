@@ -5,7 +5,7 @@ Simple and clean UI library for Roblox executors.
 ## Basic Setup
 
 ```lua
-local Buster = loadstring(game:HttpGet("http://212.227.64.179:9172/raw/buster-ui-library"))()
+local Buster = loadstring(game:HttpGet("https://raw.githubusercontent.com/jurky2/Buster-Ui-Library-V2/refs/heads/main/UI.lua"))()
 
 local Window = Buster:CreateWindow({
     Name = "Buster UI",
