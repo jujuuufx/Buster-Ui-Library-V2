@@ -46,6 +46,7 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local GuiService = game:GetService("GuiService")
+local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -61,19 +62,19 @@ end
 
 local Theme = {
 
-    Bg = Color3.fromRGB(23, 25, 29), -- Backgrounds.Dark
-    Top = Color3.fromRGB(27, 29, 33), -- Backgrounds.Medium
-    Side = Color3.fromRGB(27, 29, 33), -- Backgrounds.Medium
-    Card = Color3.fromRGB(33, 34, 38), -- Backgrounds.Light
-    Card2 = Color3.fromRGB(33, 36, 42), -- Backgrounds.Groupbox
-    Stroke = Color3.fromRGB(65, 69, 77), -- Foregrounds.Dark
-    StrokeSoft = Color3.fromRGB(65, 69, 77), -- Foregrounds.Dark
-    Text = Color3.fromRGB(255, 255, 255), -- Foregrounds.Active
-    SubText = Color3.fromRGB(165, 165, 165), -- Foregrounds.Medium
+    Bg = Color3.fromRGB(23, 25, 29),
+    Top = Color3.fromRGB(27, 29, 33),
+    Side = Color3.fromRGB(27, 29, 33),
+    Card = Color3.fromRGB(33, 34, 38),
+    Card2 = Color3.fromRGB(33, 36, 42),
+    Stroke = Color3.fromRGB(65, 69, 77),
+    StrokeSoft = Color3.fromRGB(65, 69, 77),
+    Text = Color3.fromRGB(255, 255, 255),
+    SubText = Color3.fromRGB(165, 165, 165),
 
     Accent = Color3.fromRGB(161, 169, 225),
-    ToggleOff = Color3.fromRGB(17, 19, 22), -- Backgrounds.Highlight
-    Track = Color3.fromRGB(33, 34, 38), -- Backgrounds.Light
+    ToggleOff = Color3.fromRGB(17, 19, 22),
+    Track = Color3.fromRGB(33, 34, 38),
     White = Color3.fromRGB(255, 255, 255),
 }
 
@@ -306,6 +307,42 @@ function Buster:CreateWindow(options)
     screen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     screen.ResetOnSpawn = false
     safeParentGui(screen)
+    
+    local customCursor = Instance.new("Frame")
+    customCursor.Name = "CustomCursor"
+    customCursor.BackgroundColor3 = Theme.Accent
+    customCursor.BorderSizePixel = 0
+    customCursor.Size = UDim2.new(0, 12, 0, 12)
+    customCursor.AnchorPoint = Vector2.new(0.5, 0.5)
+    customCursor.ZIndex = 50000
+    customCursor.Visible = false
+    customCursor.Parent = screen
+    applyCorner(customCursor, 6)
+
+    local cursorStroke = Instance.new("UIStroke")
+    cursorStroke.Color = Theme.White
+    cursorStroke.Thickness = 2
+    cursorStroke.Transparency = 0.3
+    cursorStroke.Parent = customCursor
+
+    local cursorCenter = Instance.new("Frame")
+    cursorCenter.Name = "CursorCenter"
+    cursorCenter.BackgroundColor3 = Theme.White
+    cursorCenter.BorderSizePixel = 0
+    cursorCenter.Size = UDim2.new(0, 4, 0, 4)
+    cursorCenter.Position = UDim2.new(0.5, -2, 0.5, -2)
+    cursorCenter.ZIndex = 50001
+    cursorCenter.Parent = customCursor
+    applyCorner(cursorCenter, 2)
+
+    local cursorEnabled = false
+    RunService.RenderStepped:Connect(function()
+        if cursorEnabled and customCursor.Visible then
+            local mousePos = UserInputService:GetMouseLocation()
+            local insetY = getInsetY()
+            customCursor.Position = UDim2.new(0, mousePos.X, 0, mousePos.Y - insetY)
+        end
+    end)
 
     local overlay = Instance.new("Frame")
     overlay.Name = "Overlay"
@@ -482,6 +519,7 @@ function Buster:CreateWindow(options)
     minimizeBtn.BackgroundColor3 = OldButtonTheme.Neutral
     minimizeBtn.LayoutOrder = 1
     minimizeBtn.Parent = controls
+    pcall(function() minimizeBtn.MouseIcon = "rbxasset://SystemCursors/PointingHand" end)
     applyCorner(minimizeBtn, 12)
 
     local fullscreenBtn = Instance.new("TextButton")
@@ -493,6 +531,7 @@ function Buster:CreateWindow(options)
     fullscreenBtn.BackgroundColor3 = OldButtonTheme.Neutral
     fullscreenBtn.LayoutOrder = 2
     fullscreenBtn.Parent = controls
+    pcall(function() fullscreenBtn.MouseIcon = "rbxasset://SystemCursors/PointingHand" end)
     applyCorner(fullscreenBtn, 12)
 
     local closeBtn = Instance.new("TextButton")
@@ -504,9 +543,124 @@ function Buster:CreateWindow(options)
     closeBtn.BackgroundColor3 = OldButtonTheme.Neutral
     closeBtn.LayoutOrder = 3
     closeBtn.Parent = controls
+    pcall(function() closeBtn.MouseIcon = "rbxasset://SystemCursors/PointingHand" end)
     applyCorner(closeBtn, 12)
 
     makeDraggable(main, top)
+
+    
+    local resizeHandle = Instance.new("Frame")
+    resizeHandle.Name = "ResizeHandle"
+    resizeHandle.BackgroundColor3 = Theme.Accent
+    resizeHandle.BackgroundTransparency = 0.7
+    resizeHandle.BorderSizePixel = 0
+    resizeHandle.Size = UDim2.new(0, 80, 0, 8)
+    resizeHandle.Position = UDim2.new(0.5, -40, 1, -8)
+    resizeHandle.ZIndex = 100
+    resizeHandle.Parent = main
+    applyCorner(resizeHandle, 4)
+
+    
+    local resizeIndicator = Instance.new("Frame")
+    resizeIndicator.Name = "ResizeIndicator"
+    resizeIndicator.BackgroundColor3 = Theme.White
+    resizeIndicator.BackgroundTransparency = 0.8
+    resizeIndicator.BorderSizePixel = 0
+    resizeIndicator.Size = UDim2.new(0, 20, 0, 3)
+    resizeIndicator.Position = UDim2.new(0.5, -10, 0.5, -1.5)
+    resizeIndicator.Parent = resizeHandle
+    applyCorner(resizeIndicator, 2)
+
+    
+    local resizeBtn = Instance.new("TextButton")
+    resizeBtn.Name = "ResizeButton"
+    resizeBtn.BackgroundTransparency = 1
+    resizeBtn.Text = ""
+    resizeBtn.Size = UDim2.new(1, 0, 1, 0)
+    resizeBtn.Parent = resizeHandle
+    pcall(function() resizeBtn.MouseIcon = "rbxasset://SystemCursors/SizeNS" end)
+
+    
+    local resizing = false
+    local resizeStartPos
+    local resizeStartSize
+    local resizeDragInput
+
+    resizeBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            resizing = true
+            resizeDragInput = input
+            resizeStartPos = input.Position
+            resizeStartSize = main.Size
+            tween(resizeHandle, { BackgroundTransparency = 0.3 }, 0.12)
+        end
+    end)
+
+    resizeBtn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if input == resizeDragInput or resizing then
+                resizing = false
+                resizeDragInput = nil
+                tween(resizeHandle, { BackgroundTransparency = 0.7 }, 0.12)
+            end
+        end
+    end)
+
+    local lastTween = nil
+    local lastTweenTime = 0
+    UserInputService.InputChanged:Connect(function(input)
+        if not resizing or not resizeDragInput then
+            return
+        end
+
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            local curPos = input.Position
+            local delta = curPos.Y - resizeStartPos.Y
+
+            local viewport = (Camera and Camera.ViewportSize) or Vector2.new(1280, 720)
+            local insetY = getInsetY()
+            local maxHeight = math.floor((viewport.Y - insetY) * 0.95)
+
+            local newHeight = clamp(resizeStartSize.Y.Offset + delta, 320, maxHeight)
+            local newWidth = resizeStartSize.X.Offset
+
+            local now = tick()
+            if now - lastTweenTime >= 0.03 then
+                lastTweenTime = now
+                pcall(function()
+                    if lastTween then
+                    end
+                    local props = {
+                        Size = UDim2.new(0, newWidth, 0, newHeight),
+                        Position = UDim2.new(0.5, -newWidth / 2, 0.5, -newHeight / 2),
+                    }
+                    lastTween = tween(main, props, 0.08)
+                end)
+            end
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if input == resizeDragInput or resizing then
+                resizing = false
+                resizeDragInput = nil
+                tween(resizeHandle, { BackgroundTransparency = 0.7 }, 0.12)
+            end
+        end
+    end)
+
+    resizeBtn.MouseEnter:Connect(function()
+        if not resizing then
+            tween(resizeHandle, { BackgroundTransparency = 0.4 }, 0.12)
+        end
+    end)
+
+    resizeBtn.MouseLeave:Connect(function()
+        if not resizing then
+            tween(resizeHandle, { BackgroundTransparency = 0.7 }, 0.12)
+        end
+    end)
 
     local minimized = false
     local fullscreen = false
@@ -690,6 +844,18 @@ function Buster:CreateWindow(options)
     tabRoot.Size = UDim2.new(1, 0, 1, 0)
     tabRoot.Parent = content
 
+    main.MouseEnter:Connect(function()
+        cursorEnabled = true
+        customCursor.Visible = true
+        pcall(function() UserInputService.MouseIconEnabled = false end)
+    end)
+
+    main.MouseLeave:Connect(function()
+        cursorEnabled = false
+        customCursor.Visible = false
+        pcall(function() UserInputService.MouseIconEnabled = true end)
+    end)
+
     local window = {}
     window._screen = screen
     window._main = main
@@ -706,6 +872,8 @@ function Buster:CreateWindow(options)
     window._enableGroups = enableGroups
     window._keybindListening = false
     window._toggleKey = defaultToggleKey
+    window._customCursor = customCursor
+    window._cursorEnabled = function() return cursorEnabled end
 
     local function computeSidebarWidth(w)
         local isPhone = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
@@ -824,6 +992,7 @@ function Buster:CreateWindow(options)
 
         btn.LayoutOrder = customOrder or window._tabOrder
         btn.Parent = nav
+        pcall(function() btn.MouseIcon = "rbxasset://SystemCursors/PointingHand" end)
         applyCorner(btn, 8)
 
         local indicator = Instance.new("Frame")
@@ -905,25 +1074,25 @@ function Buster:CreateWindow(options)
             layout.Parent = sf
             
             local function updateCanvasSize()
+                task.wait()
                 pcall(function()
-                    if layout and layout.AbsoluteContentSize and sf then
-
-                        local contentHeight = layout.AbsoluteContentSize.Y + 10
-                        sf.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
-
-                        task.wait()
-                        sf.CanvasPosition = Vector2.new(0, 0)
+                    if layout and layout.Parent and sf and sf.Parent then
+                        local contentHeight = math.max(0, layout.AbsoluteContentSize.Y)
+                        sf.CanvasSize = UDim2.new(0, 0, 0, contentHeight + 12)
                     end
                 end)
             end
             
             pcall(function()
-                layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    updateCanvasSize()
-                end)
+                layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
             end)
 
-            task.spawn(updateCanvasSize)
+            pcall(function()
+                sf.ChildAdded:Connect(updateCanvasSize)
+                sf.ChildRemoved:Connect(updateCanvasSize)
+            end)
+
+            task.defer(updateCanvasSize)
             return layout
         end
 
@@ -1043,35 +1212,54 @@ function Buster:CreateWindow(options)
             bodyLayout.SortOrder = Enum.SortOrder.LayoutOrder
             bodyLayout.Padding = UDim.new(0, 8)
             bodyLayout.Parent = body
-            
+
             local function updateCardSize()
+                task.wait()
                 pcall(function()
-                    if bodyLayout and bodyLayout.AbsoluteContentSize then
-                        card.Size = UDim2.new(1, -(cardInset * 2), 0, 10 + 22 + 8 + 10 + bodyLayout.AbsoluteContentSize.Y)
-                        body.Size = UDim2.new(1, 0, 0, bodyLayout.AbsoluteContentSize.Y)
+                    if cardLayout and cardLayout.Parent and card and card.Parent then
+                        local fullHeight = math.max(0, cardLayout.AbsoluteContentSize.Y)
+                        card.Size = UDim2.new(1, -(cardInset * 2), 0, fullHeight)
+                    end
+                    if bodyLayout and bodyLayout.Parent and body and body.Parent then
+                        local contentHeight = math.max(0, bodyLayout.AbsoluteContentSize.Y)
+                        body.Size = UDim2.new(1, 0, 0, contentHeight)
                     end
                 end)
             end
-            
+
             pcall(function()
+                cardLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCardSize)
                 bodyLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCardSize)
             end)
 
-            task.spawn(updateCardSize)
+            
+            pcall(function()
+                body.ChildAdded:Connect(updateCardSize)
+                body.ChildRemoved:Connect(updateCardSize)
+                card.ChildAdded:Connect(updateCardSize)
+                card.ChildRemoved:Connect(updateCardSize)
+            end)
+
+            task.defer(updateCardSize)
 
             local panel = {}
             panel.Frame = card
+            panel._layoutOrder = 0
 
             function panel:Divider()
+                panel._layoutOrder = panel._layoutOrder + 1
                 local dWrap = createRow(body, 6)
+                dWrap.LayoutOrder = panel._layoutOrder
                 createDivider(dWrap)
                 return dWrap
             end
 
             function panel:CreateToggle(opt)
                 opt = opt or {}
+                panel._layoutOrder = panel._layoutOrder + 1
                 local success = pcall(function()
                     local row = createRow(body, 26)
+                    row.LayoutOrder = panel._layoutOrder
                     local hasIcon = opt.Icon ~= nil
                     local x = 0
                     if hasIcon then
@@ -1108,7 +1296,9 @@ function Buster:CreateWindow(options)
                     opt = { Text = opt }
                 end
                 opt = opt or {}
+                panel._layoutOrder = panel._layoutOrder + 1
                 local row = createRow(body, opt.Height or 22)
+                row.LayoutOrder = panel._layoutOrder
                 local lbl = createText(row, opt.Text or "Label", opt.Size or 12, opt.Bold or false, opt.Color or Theme.SubText)
                 lbl.Size = UDim2.new(1, 0, 1, 0)
                 lbl.TextXAlignment = opt.AlignRight and Enum.TextXAlignment.Right or Enum.TextXAlignment.Left
@@ -1117,7 +1307,9 @@ function Buster:CreateWindow(options)
 
             function panel:CreateButton(opt)
                 opt = opt or {}
+                panel._layoutOrder = panel._layoutOrder + 1
                 local row = createRow(body, 32)
+                row.LayoutOrder = panel._layoutOrder
                 local btn2 = Instance.new("TextButton")
                 btn2.AutoButtonColor = false
                 btn2.BorderSizePixel = 0
@@ -1130,6 +1322,7 @@ function Buster:CreateWindow(options)
                 btn2.Font = Enum.Font.Gotham
                 btn2.TextXAlignment = Enum.TextXAlignment.Left
                 btn2.Parent = row
+                pcall(function() btn2.MouseIcon = "rbxasset://SystemCursors/PointingHand" end)
                 applyCorner(btn2, 7)
                 applyStroke(btn2, Theme.Stroke, 0.5)
                 
@@ -1159,10 +1352,12 @@ function Buster:CreateWindow(options)
                 local suffix = opt.Suffix or "%"
                 local cb = opt.Callback or function() end
 
+                panel._layoutOrder = panel._layoutOrder + 1
                 local wrap = Instance.new("Frame")
                 wrap.BackgroundTransparency = 1
                 wrap.BorderSizePixel = 0
                 wrap.Size = UDim2.new(1, 0, 0, 46)
+                wrap.LayoutOrder = panel._layoutOrder
                 wrap.Parent = body
 
                 local titleRow = createRow(wrap, 18)
@@ -1294,7 +1489,9 @@ function Buster:CreateWindow(options)
 
             function panel:CreateKeybind(opt)
                 opt = opt or {}
+                panel._layoutOrder = panel._layoutOrder + 1
                 local row = createRow(body, 28)
+                row.LayoutOrder = panel._layoutOrder
                 local hasIcon = opt.Icon ~= nil
                 local x = 0
                 if hasIcon then
@@ -1394,10 +1591,12 @@ function Buster:CreateWindow(options)
                 local cb = opt.Callback or function() end
                 local labelText = opt.Label
 
+                panel._layoutOrder = panel._layoutOrder + 1
                 local wrap = Instance.new("Frame")
                 wrap.BackgroundTransparency = 1
                 wrap.BorderSizePixel = 0
                 wrap.Size = UDim2.new(1, 0, 0, (labelText and labelText ~= "") and 52 or 34)
+                wrap.LayoutOrder = panel._layoutOrder
                 wrap.Parent = body
 
                 if labelText and labelText ~= "" then
@@ -1924,6 +2123,50 @@ function Buster:CreateWindow(options)
         window:Toggle()
         if isMobileToggle and outsideText and outsideText.Parent then
             outsideText.Text = main.Visible and "Close" or "Open"
+        end
+    end)
+
+    local function refreshAllLayouts()
+        pcall(function()
+            for _, tab in ipairs(window._tabs) do
+                for _, sf in ipairs({ tab._left, tab._right }) do
+                    if sf and sf.Parent then
+                        
+                        local mainLayout = sf:FindFirstChildWhichIsA("UIListLayout", true)
+                        if mainLayout then
+                            local height = math.max(0, mainLayout.AbsoluteContentSize.Y)
+                            sf.CanvasSize = UDim2.new(0, 0, 0, height + 12)
+                        end
+
+                        for _, child in ipairs(sf:GetChildren()) do
+                            if child:IsA("Frame") then
+                                local cardLayout = child:FindFirstChildWhichIsA("UIListLayout")
+                                if cardLayout then
+                                    local fullHeight = math.max(0, cardLayout.AbsoluteContentSize.Y)
+                                    
+                                    child.Size = UDim2.new(1, -12, 0, fullHeight)
+                                end
+                                
+                                for _, sub in ipairs(child:GetChildren()) do
+                                    if sub:IsA("Frame") and sub:FindFirstChildWhichIsA("UIListLayout") then
+                                        local bLayout = sub:FindFirstChildWhichIsA("UIListLayout")
+                                        if bLayout then
+                                            sub.Size = UDim2.new(1, 0, 0, math.max(0, bLayout.AbsoluteContentSize.Y))
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    end
+
+    task.spawn(function()
+        while not destroyed and main and main.Parent do
+            refreshAllLayouts()
+            task.wait(1)
         end
     end)
 
