@@ -269,6 +269,7 @@ function Buster:CreateWindow(options)
     local footerText = options.Footer or subtitleText
     local brandText = options.BrandText or "S"
     local brandImage = options.BrandImage
+    local accentColor = options.Accent
     local forcedSize = options.Size
     local enableGroups = options.Groups == true
     local defaultToggleKey = options.ToggleKey or Enum.KeyCode.RightShift
@@ -706,6 +707,7 @@ function Buster:CreateWindow(options)
     window._enableGroups = enableGroups
     window._keybindListening = false
     window._toggleKey = defaultToggleKey
+    window._accentColor = accentColor
 
     local function computeSidebarWidth(w)
         local isPhone = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
@@ -1017,6 +1019,14 @@ function Buster:CreateWindow(options)
             cardLayout.SortOrder = Enum.SortOrder.LayoutOrder
             cardLayout.Padding = UDim.new(0, 8)
             cardLayout.Parent = card
+            
+            cardLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                pcall(function()
+                    if card and cardLayout then
+                        card.Size = UDim2.new(1, -(cardInset * 2), 0, 10 + cardLayout.AbsoluteContentSize.Y + 10)
+                    end
+                end)
+            end)
 
             local headerRow = createRow(card, 22)
             headerRow.LayoutOrder = 1
@@ -1044,20 +1054,13 @@ function Buster:CreateWindow(options)
             bodyLayout.Padding = UDim.new(0, 8)
             bodyLayout.Parent = body
             
-            local function updateCardSize()
+            bodyLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                 pcall(function()
-                    if bodyLayout and bodyLayout.AbsoluteContentSize then
-                        card.Size = UDim2.new(1, -(cardInset * 2), 0, 10 + 22 + 8 + 10 + bodyLayout.AbsoluteContentSize.Y)
+                    if body and bodyLayout then
                         body.Size = UDim2.new(1, 0, 0, bodyLayout.AbsoluteContentSize.Y)
                     end
                 end)
-            end
-            
-            pcall(function()
-                bodyLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCardSize)
             end)
-
-            task.spawn(updateCardSize)
 
             local panel = {}
             panel.Frame = card
@@ -1740,6 +1743,23 @@ function Buster:CreateWindow(options)
                     GetValue = function()
                         return current
                     end,
+                    StartAutoRefresh = function(_)
+                        local refreshTask
+                        local function autoRefresh()
+                            if refreshTask then
+                                task.cancel(refreshTask)
+                            end
+                            refreshTask = task.spawn(function()
+                                while expanded and drop and drop.Parent do
+                                    task.wait(0.5)
+                                    if expanded and drop and drop.Parent then
+                                        rebuild(list)
+                                    end
+                                end
+                            end)
+                        end
+                        autoRefresh()
+                    end,
                 }
             end
 
@@ -1877,6 +1897,7 @@ function Buster:CreateWindow(options)
 
     do
         local settingsTab = window:CreateTab("Settings")
+        settingsTab._button.LayoutOrder = 99999
         local panel = settingsTab:CreatePanel({ Column = "Left", Title = "Settings" })
 
         panel:CreateKeybind({
@@ -2056,7 +2077,7 @@ function Buster:CreateHomeTab(window, options)
 
     local welcome = Instance.new("Frame")
     welcome.Name = "HomeWelcome"
-    welcome.BackgroundColor3 = Theme.Card
+    welcome.BackgroundColor3 = (window._accentColor and Color3.fromString(tostring(window._accentColor))) or Theme.Card
     welcome.BorderSizePixel = 0
     welcome.Size = UDim2.new(1, 0, 0, welcomeHeight)
     welcome.Position = UDim2.new(0, 0, 0, 0)
@@ -2086,7 +2107,7 @@ function Buster:CreateHomeTab(window, options)
 
     local backdropFade = Instance.new("Frame")
     backdropFade.Name = "HomeBackdropFade"
-    backdropFade.BackgroundColor3 = Theme.Card
+    backdropFade.BackgroundColor3 = (window._accentColor and Color3.fromString(tostring(window._accentColor))) or Theme.Card
     backdropFade.BorderSizePixel = 0
     backdropFade.BackgroundTransparency = 0.2
     backdropFade.Size = UDim2.new(1, 0, 1, 0)
