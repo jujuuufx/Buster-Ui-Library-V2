@@ -77,6 +77,64 @@ local Theme = {
     White = Color3.fromRGB(255, 255, 255),
 }
 
+local function parseAccentColor(v)
+    if v == nil then
+        return nil
+    end
+
+    if typeof(v) == "Color3" then
+        return v
+    end
+
+    if type(v) == "table" then
+        local r = v.R or v.r or v[1]
+        local g = v.G or v.g or v[2]
+        local b = v.B or v.b or v[3]
+        if type(r) == "number" and type(g) == "number" and type(b) == "number" then
+            if r <= 1 and g <= 1 and b <= 1 then
+                return Color3.new(r, g, b)
+            end
+            return Color3.fromRGB(clamp(r, 0, 255), clamp(g, 0, 255), clamp(b, 0, 255))
+        end
+        return nil
+    end
+
+    if type(v) ~= "string" then
+        return nil
+    end
+
+    local s = v:gsub("%s+", "")
+    if s == "" then
+        return nil
+    end
+
+    if s:sub(1, 1) == "#" then
+        local hex = s:sub(2)
+        if #hex == 6 then
+            local n = tonumber(hex, 16)
+            if n then
+                local r = math.floor(n / 65536) % 256
+                local g = math.floor(n / 256) % 256
+                local b = n % 256
+                return Color3.fromRGB(r, g, b)
+            end
+        end
+        return nil
+    end
+
+    local rr, gg, bb = s:match("^(%d+),(%d+),(%d+)$")
+    if rr then
+        return Color3.fromRGB(clamp(tonumber(rr), 0, 255), clamp(tonumber(gg), 0, 255), clamp(tonumber(bb), 0, 255))
+    end
+
+    rr, gg, bb = s:lower():match("^rgb%((%d+),(%d+),(%d+)%)$")
+    if rr then
+        return Color3.fromRGB(clamp(tonumber(rr), 0, 255), clamp(tonumber(gg), 0, 255), clamp(tonumber(bb), 0, 255))
+    end
+
+    return nil
+end
+
 local OldButtonTheme = {
 
     Neutral = Color3.fromRGB(65, 69, 77),
@@ -269,7 +327,10 @@ function Buster:CreateWindow(options)
     local footerText = options.Footer or subtitleText
     local brandText = options.BrandText or "S"
     local brandImage = options.BrandImage
-    local accentColor = options.Accent
+    local accentColor = parseAccentColor(options.Accent)
+    if accentColor then
+        Theme.Accent = accentColor
+    end
     local forcedSize = options.Size
     local enableGroups = options.Groups == true
     local defaultToggleKey = options.ToggleKey or Enum.KeyCode.RightShift
@@ -707,7 +768,7 @@ function Buster:CreateWindow(options)
     window._enableGroups = enableGroups
     window._keybindListening = false
     window._toggleKey = defaultToggleKey
-    window._accentColor = accentColor
+    window._accentColor = accentColor or Theme.Accent
 
     local function computeSidebarWidth(w)
         local isPhone = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
@@ -2077,13 +2138,13 @@ function Buster:CreateHomeTab(window, options)
 
     local welcome = Instance.new("Frame")
     welcome.Name = "HomeWelcome"
-    welcome.BackgroundColor3 = window._accentColor or Theme.Card
+    welcome.BackgroundColor3 = Theme.Card
     welcome.BorderSizePixel = 0
     welcome.Size = UDim2.new(1, 0, 0, welcomeHeight)
     welcome.Position = UDim2.new(0, 0, 0, 0)
     welcome.Parent = content
     applyCorner(welcome, 12)
-    applyStroke(welcome, Theme.StrokeSoft, 0.55)
+    applyStroke(welcome, Theme.Accent, 0.75)
 
     local backdrop = Instance.new("ImageLabel")
     backdrop.Name = "HomeBackdrop"
@@ -2091,7 +2152,7 @@ function Buster:CreateHomeTab(window, options)
     backdrop.BorderSizePixel = 0
     backdrop.Size = UDim2.new(1, 0, 1, 0)
     backdrop.ScaleType = Enum.ScaleType.Crop
-    backdrop.ImageTransparency = 0.55
+    backdrop.ImageTransparency = 0.7
     backdrop.Image = ""
     backdrop.ZIndex = 1
     backdrop.Parent = welcome
@@ -2107,9 +2168,9 @@ function Buster:CreateHomeTab(window, options)
 
     local backdropFade = Instance.new("Frame")
     backdropFade.Name = "HomeBackdropFade"
-    backdropFade.BackgroundColor3 = window._accentColor or Theme.Card
+    backdropFade.BackgroundColor3 = Theme.Card
     backdropFade.BorderSizePixel = 0
-    backdropFade.BackgroundTransparency = 0.2
+    backdropFade.BackgroundTransparency = 0.06
     backdropFade.Size = UDim2.new(1, 0, 1, 0)
     backdropFade.ZIndex = 2
     backdropFade.Parent = welcome
@@ -2171,25 +2232,28 @@ function Buster:CreateHomeTab(window, options)
     welcomeTitle.Size = UDim2.new(1, -220, 0, 22)
     welcomeTitle.ZIndex = 5
 
-    local welcomeSub = createText(welcomeContent, "", 12, false, Theme.SubText)
+    local welcomeSub = createText(welcomeContent, "", 12, false, Theme.Text)
     welcomeSub.Name = "HomeWelcomeSub"
     welcomeSub.Position = UDim2.new(0, 66, 0, 42)
     welcomeSub.Size = UDim2.new(1, -220, 0, 18)
     welcomeSub.ZIndex = 5
+    welcomeSub.TextTransparency = 0.25
 
-    local timeLabel = createText(welcomeContent, "", 12, false, Theme.SubText)
+    local timeLabel = createText(welcomeContent, "", 12, false, Theme.Text)
     timeLabel.Name = "HomeTime"
     timeLabel.TextXAlignment = Enum.TextXAlignment.Right
     timeLabel.Position = UDim2.new(1, -8, 0, 20)
     timeLabel.Size = UDim2.new(0, 200, 0, 18)
     timeLabel.ZIndex = 5
+    timeLabel.TextTransparency = 0.25
 
-    local dateLabel = createText(welcomeContent, "", 12, false, Theme.SubText)
+    local dateLabel = createText(welcomeContent, "", 12, false, Theme.Text)
     dateLabel.Name = "HomeDate"
     dateLabel.TextXAlignment = Enum.TextXAlignment.Right
     dateLabel.Position = UDim2.new(1, -8, 0, 42)
     dateLabel.Size = UDim2.new(0, 200, 0, 18)
     dateLabel.ZIndex = 5
+    dateLabel.TextTransparency = 0.25
 
     local function getGreetingString(hour)
         if hour >= 4 and hour < 12 then
