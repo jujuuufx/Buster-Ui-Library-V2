@@ -1,12 +1,14 @@
 local Buster = {}
-
 if not gethui then
-    getfenv().gethui = function() return game:GetService("CoreGui") end
+    if getfenv then
+        getfenv().gethui = function() return game:GetService("CoreGui") end
+    end
 end
 if not syn then
-    getfenv().syn = {}
+    if getfenv then
+        getfenv().syn = {}
+    end
 end
-
 if not identifyexecutor then
     if getfenv then
         getfenv().identifyexecutor = function()
