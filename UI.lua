@@ -216,6 +216,12 @@ local function makeResizable(frame, minW, minH)
     resizer.AnchorPoint = Vector2.new(1, 1)
     resizer.AutoButtonColor = false
     resizer.Parent = frame
+    resizer.MouseEnter:Connect(function()
+        UserInputService.MouseIcon = "rbxasset://SystemCursors/ResizeNWSE"
+    end)
+    resizer.MouseLeave:Connect(function()
+        UserInputService.MouseIcon = ""
+    end)
     local resizing = false
     local startSize
     local startInputPos
@@ -224,6 +230,7 @@ local function makeResizable(frame, minW, minH)
             resizing = true
             startSize = frame.Size
             startInputPos = input.Position
+            UserInputService.MouseIcon = "rbxasset://SystemCursors/ResizeNWSE"
         end
     end)
     UserInputService.InputChanged:Connect(function(input)
@@ -243,6 +250,9 @@ local function makeResizable(frame, minW, minH)
     UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             resizing = false
+            if not resizer.MouseEntered then
+                UserInputService.MouseIcon = ""
+            end
         end
     end)
 end
@@ -452,6 +462,12 @@ function Buster:CreateWindow(options)
     local startW, startH = computeWindowSize()
     main.Size = UDim2.new(0, startW, 0, startH)
     main.Position = UDim2.new(0.5, -startW / 2, 0.5, -startH / 2)
+    if savedConfig.size and savedConfig.position then
+        startW = savedConfig.size.w or startW
+        startH = savedConfig.size.h or startH
+        main.Size = UDim2.new(0, startW, 0, startH)
+        main.Position = UDim2.new(savedConfig.position.x_scale or 0.5, savedConfig.position.x_offset or -startW / 2, savedConfig.position.y_scale or 0.5, savedConfig.position.y_offset or -startH / 2)
+    end
     main.BackgroundColor3 = Theme.Bg
     main.BorderSizePixel = 0
     main.ClipsDescendants = true
@@ -1677,6 +1693,51 @@ function Buster:CreateWindow(options)
                     end,
                 }
             end
+            function panel:CreateTextBox(opt)
+                opt = opt or {}
+                local row = createRow(body, 28)
+                local hasIcon = opt.Icon ~= nil
+                local x = 0
+                if hasIcon then
+                    local ic = Instance.new("ImageLabel")
+                    ic.BackgroundTransparency = 1
+                    ic.Size = UDim2.new(0, 16, 0, 16)
+                    ic.Position = UDim2.new(0, 0, 0.5, -8)
+                    ic.Image = opt.Icon
+                    ic.ImageColor3 = Theme.SubText
+                    ic.Parent = row
+                    x = 22
+                end
+                local lbl = createText(row, opt.Name or "TextBox", 12, false, Theme.Text)
+                lbl.Size = UDim2.new(1, -130 - x, 1, 0)
+                lbl.Position = UDim2.new(0, x, 0, 0)
+                local textBox = Instance.new("TextBox")
+                textBox.BorderSizePixel = 0
+                textBox.Size = UDim2.new(0, 110, 0, 22)
+                textBox.Position = UDim2.new(1, -110, 0.5, -11)
+                textBox.BackgroundColor3 = Theme.ToggleOff
+                textBox.TextColor3 = Theme.Text
+                textBox.TextSize = 11
+                textBox.Font = Enum.Font.Gotham
+                textBox.Text = opt.Default or ""
+                textBox.Parent = row
+                applyCorner(textBox, 7)
+                applyStroke(textBox, Theme.StrokeSoft, 0.45)
+                local cb = opt.Callback or function() end
+                textBox.FocusLost:Connect(function(enterPressed)
+                    if enterPressed then
+                        pcall(cb, textBox.Text)
+                    end
+                end)
+                return {
+                    SetValue = function(_, v)
+                        textBox.Text = tostring(v)
+                    end,
+                    GetValue = function()
+                        return textBox.Text
+                    end,
+                }
+            end
             panel.CreateButton = panel.CreateButton
             return panel
         end
@@ -1803,6 +1864,20 @@ function Buster:CreateWindow(options)
             end,
         })
         panel:Divider()
+        local accentBox = panel:CreateTextBox({
+            Name = "Accent Color (#HEX or RGB)",
+            Default = string.format("#%02x%02x%02x", math.floor(Theme.Accent.R * 255), math.floor(Theme.Accent.G * 255), math.floor(Theme.Accent.B * 255)),
+            Callback = function(value)
+                local c = parseAccentColor(value)
+                if c then
+                    Theme.Accent = c
+                    window:Notify({ Title = titleText, Text = "Accent color updated. Save and re-execute to apply.", Duration = 3 })
+                else
+                    window:Notify({ Title = titleText, Text = "Invalid color format.", Duration = 3 })
+                end
+            end
+        })
+        panel:Divider()
         panel:CreateButton({
             Name = "Save Config",
             Callback = function()
@@ -1812,8 +1887,30 @@ function Buster:CreateWindow(options)
                         r = math.floor(Theme.Accent.R * 255),
                         g = math.floor(Theme.Accent.G * 255),
                         b = math.floor(Theme.Accent.B * 255),
+                    },
+                    size = {
+                        w = main.Size.X.Offset,
+                        h = main.Size.Y.Offset,
+                    },
+                    position = {
+                        x_scale = main.Position.X.Scale,
+                        x_offset = main.Position.X.Offset,
+                        y_scale = main.Position.Y.Scale,
+                        y_offset = main.Position.Y.Offset,
                     }
                 }
+                if minimized or fullscreen then
+                    data.size = {
+                        w = restoreSize.X.Offset,
+                        h = restoreSize.Y.Offset,
+                    }
+                    data.position = {
+                        x_scale = restorePos.X.Scale,
+                        x_offset = restorePos.X.Offset,
+                        y_scale = restorePos.Y.Scale,
+                        y_offset = restorePos.Y.Offset,
+                    }
+                end
                 local json = HttpService:JSONEncode(data)
                 writefile(configFile, json)
                 window:Notify({ Title = titleText, Text = "Config saved to " .. configFile, Duration = 2.5 })
