@@ -2271,8 +2271,109 @@ function Buster:CreateHomeTab(window, options)
         grid.Name = "HomeFriendsGrid"
         grid.BackgroundTransparency = 1
         grid.BorderSizePixel = 0
-        grid.Size = UDim2.new(1, 0
-            
+        grid.Size = UDim2.new(1, 0, 1, 0)
+        grid.Parent = friendsBody
+
+        local gridLayout = Instance.new("UIGridLayout")
+        gridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
+        gridLayout.CellSize = UDim2.new(0.5, -5, 0, 56)
+        gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        gridLayout.Parent = grid
+
+        local function friendTile(titleText)
+            local tile = Instance.new("Frame")
+            tile.Name = "HomeFriendTile"
+            tile.BackgroundColor3 = Theme.Card2
+            tile.BorderSizePixel = 0
+            tile.Parent = grid
+            applyCorner(tile, 10)
+            applyStroke(tile, Theme.StrokeSoft, 0.7)
+
+            local p = Instance.new("UIPadding")
+            p.Name = "HomeFriendPad"
+            p.PaddingTop = UDim.new(0, 8)
+            p.PaddingLeft = UDim.new(0, 10)
+            p.PaddingRight = UDim.new(0, 10)
+            p.PaddingBottom = UDim.new(0, 8)
+            p.Parent = tile
+
+            local title = createText(tile, titleText, 11, true, Theme.Text)
+            title.Size = UDim2.new(1, 0, 0, 16)
+            local value = createText(tile, "0 friends", 11, false, Theme.SubText)
+            value.Position = UDim2.new(0, 0, 0, 18)
+            value.Size = UDim2.new(1, 0, 0, 30)
+            value.TextWrapped = true
+            value.TextYAlignment = Enum.TextYAlignment.Top
+            return value
+        end
+
+        local inServerLabel = friendTile("In Server")
+        local offlineLabel = friendTile("Offline")
+        local onlineLabel = friendTile("Online")
+        local totalLabel = friendTile("Total")
+
+        local friendsCooldown = 0
+        local function checkFriends()
+            if friendsCooldown > 0 then
+                friendsCooldown -= 1
+                return
+            end
+            friendsCooldown = 25
+
+            local lp = Players.LocalPlayer
+            if not (lp and lp.UserId) then
+                return
+            end
+
+            local total = 0
+            local online = 0
+            local inServer = 0
+
+            pcall(function()
+                online = #lp:GetFriendsOnline()
+            end)
+
+            pcall(function()
+                local playersFriends = {}
+                local list = Players:GetFriendsAsync(lp.UserId)
+                while true do
+                    for _, data in list:GetCurrentPage() do
+                        total += 1
+                        table.insert(playersFriends, data)
+                    end
+                    if list.IsFinished then
+                        break
+                    end
+                    list:AdvanceToNextPageAsync()
+                end
+
+                for _, data in ipairs(playersFriends) do
+                    if Players:FindFirstChild(data.Username) then
+                        inServer += 1
+                    end
+                end
+            end)
+
+            local offline = math.max(0, total - online)
+
+            inServerLabel.Text = tostring(inServer) .. " friends"
+            offlineLabel.Text = tostring(offline) .. " friends"
+            onlineLabel.Text = tostring(online) .. " friends"
+            totalLabel.Text = tostring(total) .. " friends"
+        end
+
+        checkFriends()
+        table.insert(
+            connections,
+            RunService.Heartbeat:Connect(function()
+                if destroyed then
+                    return
+                end
+                checkFriends()
+            end)
+        )
+    end
+
     return homeTab
 end
 
