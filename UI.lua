@@ -1,5 +1,4 @@
 local Buster = {}
-
 if not gethui then
     getfenv().gethui = function() return game:GetService("CoreGui") end
 end
@@ -40,16 +39,13 @@ end
 if not fireproximityprompt then
     getfenv().fireproximityprompt = function() end
 end
-
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local GuiService = game:GetService("GuiService")
-
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
-
 local function getInsetY()
     local insetY = 0
     pcall(function()
@@ -58,9 +54,7 @@ local function getInsetY()
     end)
     return insetY
 end
-
 local Theme = {
-
     Bg = Color3.fromRGB(23, 25, 29), -- Backgrounds.Dark
     Top = Color3.fromRGB(27, 29, 33), -- Backgrounds.Medium
     Side = Color3.fromRGB(27, 29, 33), -- Backgrounds.Medium
@@ -70,22 +64,18 @@ local Theme = {
     StrokeSoft = Color3.fromRGB(65, 69, 77), -- Foregrounds.Dark
     Text = Color3.fromRGB(255, 255, 255), -- Foregrounds.Active
     SubText = Color3.fromRGB(165, 165, 165), -- Foregrounds.Medium
-
     Accent = Color3.fromRGB(161, 169, 225),
     ToggleOff = Color3.fromRGB(17, 19, 22), -- Backgrounds.Highlight
     Track = Color3.fromRGB(33, 34, 38), -- Backgrounds.Light
     White = Color3.fromRGB(255, 255, 255),
 }
-
 local function parseAccentColor(v)
     if v == nil then
         return nil
     end
-
     if typeof(v) == "Color3" then
         return v
     end
-
     if type(v) == "table" then
         local r = v.R or v.r or v[1]
         local g = v.G or v.g or v[2]
@@ -98,16 +88,13 @@ local function parseAccentColor(v)
         end
         return nil
     end
-
     if type(v) ~= "string" then
         return nil
     end
-
     local s = v:gsub("%s+", "")
     if s == "" then
         return nil
     end
-
     if s:sub(1, 1) == "#" then
         local hex = s:sub(2)
         if #hex == 6 then
@@ -121,34 +108,27 @@ local function parseAccentColor(v)
         end
         return nil
     end
-
     local rr, gg, bb = s:match("^(%d+),(%d+),(%d+)$")
     if rr then
         return Color3.fromRGB(clamp(tonumber(rr), 0, 255), clamp(tonumber(gg), 0, 255), clamp(tonumber(bb), 0, 255))
     end
-
     rr, gg, bb = s:lower():match("^rgb%((%d+),(%d+),(%d+)%)$")
     if rr then
         return Color3.fromRGB(clamp(tonumber(rr), 0, 255), clamp(tonumber(gg), 0, 255), clamp(tonumber(bb), 0, 255))
     end
-
     return nil
 end
-
 local OldButtonTheme = {
-
     Neutral = Color3.fromRGB(65, 69, 77),
     NeutralHover = Color3.fromRGB(85, 89, 97),
     CloseHover = Color3.fromRGB(200, 50, 60),
 }
-
 local function tween(instance, properties, duration)
     duration = duration or 0.18
     local t = TweenService:Create(instance, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), properties)
     t:Play()
     return t
 end
-
 local function clamp(n, minValue, maxValue)
     if n < minValue then
         return minValue
@@ -158,14 +138,12 @@ local function clamp(n, minValue, maxValue)
     end
     return n
 end
-
 local function applyCorner(instance, radius)
     local c = Instance.new("UICorner")
     c.CornerRadius = UDim.new(0, radius)
     c.Parent = instance
     return c
 end
-
 local function applyStroke(instance, color, transparency)
     local s = Instance.new("UIStroke")
     s.Color = color
@@ -174,14 +152,12 @@ local function applyStroke(instance, color, transparency)
     s.Parent = instance
     return s
 end
-
 local function makeDraggable(frame, handle)
     handle = handle or frame
     local dragging = false
     local dragInput
     local startPos
     local startInputPos
-
     handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
@@ -190,7 +166,6 @@ local function makeDraggable(frame, handle)
             startPos = frame.Position
         end
     end)
-
     handle.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             if input == dragInput then
@@ -199,18 +174,15 @@ local function makeDraggable(frame, handle)
             end
         end
     end)
-
     UserInputService.InputChanged:Connect(function(input)
         if not dragging or not dragInput then
             return
         end
-
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             local delta = input.Position - startInputPos
             frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
-
     UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             if input == dragInput or dragging then
@@ -220,7 +192,6 @@ local function makeDraggable(frame, handle)
         end
     end)
 end
-
 local function truncateWithStars(text, maxChars)
     text = tostring(text or "")
     maxChars = maxChars or 24
@@ -232,7 +203,6 @@ local function truncateWithStars(text, maxChars)
     end
     return string.sub(text, 1, maxChars - 2) .. "**"
 end
-
 local function safeParentGui(gui)
     if syn and syn.protect_gui then
         pcall(function()
@@ -247,7 +217,6 @@ local function safeParentGui(gui)
     end
     gui.Parent = CoreGui
 end
-
 local function createRow(parent, height)
     local row = Instance.new("Frame")
     row.BackgroundTransparency = 1
@@ -256,7 +225,6 @@ local function createRow(parent, height)
     row.Parent = parent
     return row
 end
-
 local function createText(parent, text, size, bold, color)
     local lbl = Instance.new("TextLabel")
     lbl.BackgroundTransparency = 1
@@ -270,7 +238,6 @@ local function createText(parent, text, size, bold, color)
     lbl.Parent = parent
     return lbl
 end
-
 local function createSquareToggle(parent, default, callback)
     local btn = Instance.new("TextButton")
     btn.AutoButtonColor = false
@@ -281,7 +248,6 @@ local function createSquareToggle(parent, default, callback)
     btn.Parent = parent
     applyCorner(btn, 6)
     applyStroke(btn, Theme.StrokeSoft, 0.4)
-
     local state = default and true or false
     local function render()
         if state then
@@ -291,13 +257,11 @@ local function createSquareToggle(parent, default, callback)
         end
     end
     render()
-
     btn.MouseButton1Click:Connect(function()
         state = not state
         render()
         pcall(callback, state)
     end)
-
     return {
         SetValue = function(_, v)
             state = v and true or false
@@ -308,7 +272,6 @@ local function createSquareToggle(parent, default, callback)
         end,
     }
 end
-
 local function createDivider(parent)
     local div = Instance.new("Frame")
     div.BorderSizePixel = 0
@@ -319,7 +282,6 @@ local function createDivider(parent)
     div.Parent = parent
     return div
 end
-
 function Buster:CreateWindow(options)
     options = options or {}
     local titleText = options.Name or "Sev.cc"
@@ -334,41 +296,31 @@ function Buster:CreateWindow(options)
     local forcedSize = options.Size
     local enableGroups = options.Groups == true
     local defaultToggleKey = options.ToggleKey or Enum.KeyCode.RightShift
-
     local function computeWindowSize()
         local isPhone = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
         local viewport = (Camera and Camera.ViewportSize) or Vector2.new(1280, 720)
         local insetY = getInsetY()
-
         if isPhone then
             local availableWidth = viewport.X
             local availableHeight = viewport.Y - insetY
-
             local baseWidth = (forcedSize and forcedSize.Width) or 860
             local baseHeight = (forcedSize and forcedSize.Height) or 480
-
             local maxW = math.floor(availableWidth * 0.96)
             local maxH = math.floor(availableHeight * 0.90)
-
             local w = math.min(baseWidth, maxW)
             local h = math.min(baseHeight, maxH)
-
             return clamp(w, 420, maxW), clamp(h, 360, maxH)
         end
-
         if forcedSize and forcedSize.Width and forcedSize.Height then
             return forcedSize.Width, forcedSize.Height
         end
-
         return 860, 480
     end
-
     local screen = Instance.new("ScreenGui")
     screen.Name = "Buster"
     screen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     screen.ResetOnSpawn = false
     safeParentGui(screen)
-
     local overlay = Instance.new("Frame")
     overlay.Name = "Overlay"
     overlay.BackgroundTransparency = 1
@@ -378,7 +330,6 @@ function Buster:CreateWindow(options)
     overlay.ZIndex = 10_000
     overlay.Visible = true
     overlay.Parent = screen
-
     local outsideToggle = Instance.new("TextButton")
     outsideToggle.Name = "OutsideToggle"
     outsideToggle.AutoButtonColor = false
@@ -391,7 +342,6 @@ function Buster:CreateWindow(options)
     outsideToggle.Parent = overlay
     applyCorner(outsideToggle, 10)
     applyStroke(outsideToggle, Theme.StrokeSoft, 0.6)
-
     local outsideText = Instance.new("TextLabel")
     outsideText.Name = "OutsideText"
     outsideText.BackgroundTransparency = 1
@@ -403,7 +353,6 @@ function Buster:CreateWindow(options)
     outsideText.Font = Enum.Font.GothamBold
     outsideText.ZIndex = 10_210
     outsideText.Parent = outsideToggle
-
     local outsideImg = Instance.new("ImageLabel")
     outsideImg.Name = "OutsideImage"
     outsideImg.BackgroundTransparency = 1
@@ -414,11 +363,9 @@ function Buster:CreateWindow(options)
     outsideImg.Visible = brandImage ~= nil and brandImage ~= ""
     outsideImg.ZIndex = 10_210
     outsideImg.Parent = outsideToggle
-
     if outsideImg.Visible then
         outsideText.Visible = false
     end
-
     local isMobileToggle = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
     outsideToggle.Visible = isMobileToggle
     if isMobileToggle then
@@ -430,10 +377,8 @@ function Buster:CreateWindow(options)
         outsideText.TextColor3 = Theme.Text
         outsideText.TextSize = 12
     end
-
     local main = Instance.new("Frame")
     main.Name = "Main"
-
     local startW, startH = computeWindowSize()
     main.Size = UDim2.new(0, startW, 0, startH)
     main.Position = UDim2.new(0.5, -startW / 2, 0.5, -startH / 2)
@@ -443,7 +388,45 @@ function Buster:CreateWindow(options)
     main.Parent = screen
     applyCorner(main, 10)
     applyStroke(main, Theme.Stroke, 0.6)
-
+    local isPhone = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    if not isPhone and not forcedSize then
+        local resizeGrip = Instance.new("TextButton")
+        resizeGrip.Name = "ResizeGrip"
+        resizeGrip.AutoButtonColor = false
+        resizeGrip.Text = "↘"
+        resizeGrip.TextColor3 = Theme.SubText
+        resizeGrip.TextSize = 14
+        resizeGrip.BackgroundTransparency = 1
+        resizeGrip.BorderSizePixel = 0
+        resizeGrip.Size = UDim2.new(0, 20, 0, 20)
+        resizeGrip.Position = UDim2.new(1, -20, 1, -20)
+        resizeGrip.Parent = main
+        local resizing = false
+        local startSize
+        local startInputPos
+        resizeGrip.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                resizing = true
+                startSize = main.Size
+                startInputPos = input.Position
+            end
+        end)
+        UserInputService.InputChanged:Connect(function(input)
+            if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = input.Position - startInputPos
+                local newWidth = startSize.X.Offset + delta.X
+                local newHeight = startSize.Y.Offset + delta.Y
+                newWidth = math.max(420, newWidth)
+                newHeight = math.max(360, newHeight)
+                main.Size = UDim2.new(0, newWidth, 0, newHeight)
+            end
+        end)
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                resizing = false
+            end
+        end)
+    end
     local top = Instance.new("Frame")
     top.Name = "TopBar"
     top.Size = UDim2.new(1, 0, 0, 52)
@@ -451,14 +434,12 @@ function Buster:CreateWindow(options)
     top.BorderSizePixel = 0
     top.Parent = main
     applyCorner(top, 10)
-
     local topFix = Instance.new("Frame")
     topFix.Size = UDim2.new(1, 0, 0, 14)
     topFix.Position = UDim2.new(0, 0, 1, -14)
     topFix.BackgroundColor3 = Theme.Top
     topFix.BorderSizePixel = 0
     topFix.Parent = top
-
     local topLine = Instance.new("Frame")
     topLine.Size = UDim2.new(1, 0, 0, 1)
     topLine.Position = UDim2.new(0, 0, 1, 0)
@@ -466,14 +447,12 @@ function Buster:CreateWindow(options)
     topLine.BackgroundTransparency = 0.6
     topLine.BorderSizePixel = 0
     topLine.Parent = top
-
     local brandWrap = Instance.new("Frame")
     brandWrap.BackgroundTransparency = 1
     brandWrap.BorderSizePixel = 0
     brandWrap.Size = UDim2.new(0, 40, 1, 0)
     brandWrap.Position = UDim2.new(0, 14, 0, 0)
     brandWrap.Parent = top
-
     local brand = Instance.new("TextLabel")
     brand.Name = "BrandText"
     brand.BackgroundTransparency = 1
@@ -485,7 +464,6 @@ function Buster:CreateWindow(options)
     brand.Font = Enum.Font.GothamBold
     brand.TextXAlignment = Enum.TextXAlignment.Left
     brand.Parent = brandWrap
-
     local brandImg = Instance.new("ImageLabel")
     brandImg.Name = "BrandImage"
     brandImg.BackgroundTransparency = 1
@@ -495,11 +473,9 @@ function Buster:CreateWindow(options)
     brandImg.ImageColor3 = Theme.Accent
     brandImg.Visible = brandImage ~= nil and brandImage ~= ""
     brandImg.Parent = brandWrap
-
     if brandImg.Visible then
         brand.Visible = false
     end
-
     local title = Instance.new("TextLabel")
     title.BackgroundTransparency = 1
     title.Size = UDim2.new(0, 260, 0, 18)
@@ -510,7 +486,6 @@ function Buster:CreateWindow(options)
     title.Font = Enum.Font.GothamBold
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Parent = top
-
     local subtitle = Instance.new("TextLabel")
     subtitle.BackgroundTransparency = 1
     subtitle.Size = UDim2.new(0, 260, 0, 16)
@@ -521,20 +496,17 @@ function Buster:CreateWindow(options)
     subtitle.Font = Enum.Font.Gotham
     subtitle.TextXAlignment = Enum.TextXAlignment.Left
     subtitle.Parent = top
-
     local controls = Instance.new("Frame")
     controls.BackgroundTransparency = 1
     controls.Size = UDim2.new(0, 66, 0, 16)
     controls.Position = UDim2.new(1, -80, 0, 18)
     controls.Parent = top
-
     local controlsLayout = Instance.new("UIListLayout")
     controlsLayout.FillDirection = Enum.FillDirection.Horizontal
     controlsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
     controlsLayout.SortOrder = Enum.SortOrder.LayoutOrder
     controlsLayout.Padding = UDim.new(0, 6)
     controlsLayout.Parent = controls
-
     local minimizeBtn = Instance.new("TextButton")
     minimizeBtn.Name = "Minimize"
     minimizeBtn.AutoButtonColor = false
@@ -545,7 +517,6 @@ function Buster:CreateWindow(options)
     minimizeBtn.LayoutOrder = 1
     minimizeBtn.Parent = controls
     applyCorner(minimizeBtn, 12)
-
     local fullscreenBtn = Instance.new("TextButton")
     fullscreenBtn.Name = "Fullscreen"
     fullscreenBtn.AutoButtonColor = false
@@ -556,7 +527,6 @@ function Buster:CreateWindow(options)
     fullscreenBtn.LayoutOrder = 2
     fullscreenBtn.Parent = controls
     applyCorner(fullscreenBtn, 12)
-
     local closeBtn = Instance.new("TextButton")
     closeBtn.Name = "Close"
     closeBtn.AutoButtonColor = false
@@ -567,9 +537,7 @@ function Buster:CreateWindow(options)
     closeBtn.LayoutOrder = 3
     closeBtn.Parent = controls
     applyCorner(closeBtn, 12)
-
     makeDraggable(main, top)
-
     local minimized = false
     local fullscreen = false
     local restoreSize = main.Size
@@ -578,7 +546,6 @@ function Buster:CreateWindow(options)
         main.Size = UDim2.new(0, w, 0, h)
         main.Position = UDim2.new(0.5, -w / 2, 0.5, -h / 2)
     end
-
     local function minimizeToggle()
         minimized = not minimized
         local w = main.Size.X.Offset
@@ -589,17 +556,14 @@ function Buster:CreateWindow(options)
             tween(main, { Position = UDim2.new(0.5, -w / 2, 0.5, -h / 2) }, 0.22)
         end
     end
-
     local function fullscreenToggle()
         if minimized then
             minimizeToggle()
         end
-
         fullscreen = not fullscreen
         if fullscreen then
             restoreSize = main.Size
             restorePos = main.Position
-
             local viewport = (Camera and Camera.ViewportSize) or Vector2.new(1280, 720)
             local insetY = getInsetY()
             local w = math.max(580, math.floor(viewport.X - 40))
@@ -612,13 +576,11 @@ function Buster:CreateWindow(options)
             tween(main, { Size = restoreSize, Position = restorePos }, 0.22)
         end
     end
-
     minimizeBtn.MouseButton1Click:Connect(minimizeToggle)
     fullscreenBtn.MouseButton1Click:Connect(fullscreenToggle)
     closeBtn.MouseButton1Click:Connect(function()
         main.Visible = false
     end)
-
     minimizeBtn.MouseEnter:Connect(function()
         tween(minimizeBtn, { BackgroundColor3 = OldButtonTheme.NeutralHover }, 0.12)
     end)
@@ -631,18 +593,15 @@ function Buster:CreateWindow(options)
     closeBtn.MouseLeave:Connect(function()
         tween(closeBtn, { BackgroundColor3 = OldButtonTheme.Neutral }, 0.12)
     end)
-
     fullscreenBtn.MouseEnter:Connect(function()
         tween(fullscreenBtn, { BackgroundColor3 = OldButtonTheme.NeutralHover }, 0.12)
     end)
     fullscreenBtn.MouseLeave:Connect(function()
         tween(fullscreenBtn, { BackgroundColor3 = OldButtonTheme.Neutral }, 0.12)
     end)
-
     local function isPhone()
         return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
     end
-
     if Camera and (not forcedSize or isPhone()) then
         Camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
             if minimized then
@@ -655,7 +614,6 @@ function Buster:CreateWindow(options)
             }, 0.22)
         end)
     end
-
     local sidebar = Instance.new("Frame")
     sidebar.Name = "Sidebar"
     sidebar.Size = UDim2.new(0, 176, 1, -52)
@@ -664,7 +622,6 @@ function Buster:CreateWindow(options)
     sidebar.BorderSizePixel = 0
     sidebar.Parent = main
     applyStroke(sidebar, Theme.StrokeSoft, 0.7)
-
     local nav = Instance.new("ScrollingFrame")
     nav.Name = "Nav"
     nav.BackgroundTransparency = 1
@@ -674,22 +631,18 @@ function Buster:CreateWindow(options)
     nav.ScrollBarThickness = 0
     nav.CanvasSize = UDim2.new(0, 0, 0, 0)
     nav.Parent = sidebar
-
     local navPad = Instance.new("UIPadding")
     navPad.PaddingTop = UDim.new(0, 10)
     navPad.PaddingLeft = UDim.new(0, 10)
     navPad.PaddingRight = UDim.new(0, 10)
     navPad.Parent = nav
-
     local navLayout = Instance.new("UIListLayout")
     navLayout.SortOrder = Enum.SortOrder.LayoutOrder
     navLayout.Padding = UDim.new(0, 6)
     navLayout.Parent = nav
-
     navLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         nav.CanvasSize = UDim2.new(0, 0, 0, navLayout.AbsoluteContentSize.Y + 14)
     end)
-
     local profile = Instance.new("Frame")
     profile.Name = "Profile"
     profile.Size = UDim2.new(1, 0, 0, 72)
@@ -698,7 +651,6 @@ function Buster:CreateWindow(options)
     profile.BorderSizePixel = 0
     profile.Parent = sidebar
     applyStroke(profile, Theme.StrokeSoft, 0.7)
-
     local avatar = Instance.new("Frame")
     avatar.Size = UDim2.new(0, 34, 0, 34)
     avatar.Position = UDim2.new(0, 12, 0, 19)
@@ -707,7 +659,6 @@ function Buster:CreateWindow(options)
     avatar.Parent = profile
     applyCorner(avatar, 17)
     applyStroke(avatar, Theme.StrokeSoft, 0.65)
-
     local avatarImg = Instance.new("ImageLabel")
     avatarImg.Name = "AvatarImage"
     avatarImg.BackgroundTransparency = 1
@@ -718,7 +669,6 @@ function Buster:CreateWindow(options)
     avatarImg.ScaleType = Enum.ScaleType.Crop
     avatarImg.Parent = avatar
     applyCorner(avatarImg, 17)
-
     task.spawn(function()
         if LocalPlayer and LocalPlayer.UserId then
             local ok, content = pcall(function()
@@ -729,15 +679,12 @@ function Buster:CreateWindow(options)
             end
         end
     end)
-
     local displayName = createText(profile, truncateWithStars((LocalPlayer and LocalPlayer.DisplayName) or "User", 18), 10, true, Theme.Text)
     displayName.Size = UDim2.new(1, -60, 0, 16)
     displayName.Position = UDim2.new(0, 54, 0, 22)
-
     local username = createText(profile, truncateWithStars((LocalPlayer and ("@" .. LocalPlayer.Name)) or "@user", 20), 9, false, Theme.SubText)
     username.Size = UDim2.new(1, -60, 0, 14)
     username.Position = UDim2.new(0, 54, 0, 38)
-
     local content = Instance.new("Frame")
     content.Name = "Content"
     content.BackgroundTransparency = 1
@@ -745,13 +692,11 @@ function Buster:CreateWindow(options)
     content.Size = UDim2.new(1, -176, 1, -52)
     content.Position = UDim2.new(0, 176, 0, 52)
     content.Parent = main
-
     local tabRoot = Instance.new("Frame")
     tabRoot.Name = "TabRoot"
     tabRoot.BackgroundTransparency = 1
     tabRoot.Size = UDim2.new(1, 0, 1, 0)
     tabRoot.Parent = content
-
     local window = {}
     window._screen = screen
     window._main = main
@@ -769,7 +714,6 @@ function Buster:CreateWindow(options)
     window._keybindListening = false
     window._toggleKey = defaultToggleKey
     window._accentColor = accentColor or Theme.Accent
-
     local function computeSidebarWidth(w)
         local isPhone = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
         if isPhone then
@@ -789,21 +733,18 @@ function Buster:CreateWindow(options)
         end
         return 176
     end
-
     local function applySubLayout()
         local w = main.Size.X.Offset
         local sidebarW = computeSidebarWidth(w)
         sidebar.Size = UDim2.new(0, sidebarW, 1, -52)
         content.Size = UDim2.new(1, -sidebarW, 1, -52)
         content.Position = UDim2.new(0, sidebarW, 0, 52)
-
         for _, t in ipairs(window._tabs) do
             if t._applyColumns then
                 t._applyColumns(w)
             end
         end
     end
-
     applySubLayout()
     main:GetPropertyChangedSignal("Size"):Connect(function()
         if minimized then
@@ -811,7 +752,6 @@ function Buster:CreateWindow(options)
         end
         applySubLayout()
     end)
-
     function window:AddGroup(name)
         if not window._enableGroups then
             window._currentGroup = name
@@ -829,7 +769,6 @@ function Buster:CreateWindow(options)
         window._currentGroup = name
         return header
     end
-
     local function setTabActive(tab, active)
         if not tab or not tab._button then
             return
@@ -848,13 +787,11 @@ function Buster:CreateWindow(options)
             tab._iconTint.ImageColor3 = Theme.SubText
         end
     end
-
     function window:CreateTab(tabOptions)
         local name
         local icon
         local group
         local customOrder
-
         if type(tabOptions) == "string" then
             name = tabOptions
             icon = nil
@@ -870,13 +807,10 @@ function Buster:CreateWindow(options)
             group = window._currentGroup
             customOrder = nil
         end
-
         local tab = {}
         tab.Name = name
         tab.Group = group
-
         window._tabOrder += 1
-
         local btn = Instance.new("TextButton")
         btn.Name = name
         btn.AutoButtonColor = false
@@ -884,11 +818,9 @@ function Buster:CreateWindow(options)
         btn.BorderSizePixel = 0
         btn.Size = UDim2.new(1, 0, 0, 34)
         btn.BackgroundColor3 = Theme.Side
-
         btn.LayoutOrder = customOrder or window._tabOrder
         btn.Parent = nav
         applyCorner(btn, 8)
-
         local indicator = Instance.new("Frame")
         indicator.BorderSizePixel = 0
         indicator.BackgroundColor3 = Theme.Accent
@@ -897,7 +829,6 @@ function Buster:CreateWindow(options)
         indicator.Position = UDim2.new(0, 6, 0.5, -9)
         indicator.Parent = btn
         applyCorner(indicator, 2)
-
         local iconImg = Instance.new("ImageLabel")
         iconImg.Name = "Icon"
         iconImg.BackgroundTransparency = 1
@@ -906,7 +837,6 @@ function Buster:CreateWindow(options)
         iconImg.Image = icon or "rbxassetid://0"
         iconImg.ImageColor3 = Theme.SubText
         iconImg.Parent = btn
-
         local label = Instance.new("TextLabel")
         label.BackgroundTransparency = 1
         label.Size = UDim2.new(1, -52, 1, 0)
@@ -918,21 +848,18 @@ function Buster:CreateWindow(options)
         label.Font = Enum.Font.Gotham
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.Parent = btn
-
         local tabContent = Instance.new("Frame")
         tabContent.Name = name .. "Content"
         tabContent.BackgroundTransparency = 1
         tabContent.Size = UDim2.new(1, 0, 1, 0)
         tabContent.Visible = false
         tabContent.Parent = tabRoot
-
         local pad = Instance.new("UIPadding")
         pad.PaddingTop = UDim.new(0, 12)
         pad.PaddingLeft = UDim.new(0, 14)
         pad.PaddingRight = UDim.new(0, 14)
         pad.PaddingBottom = UDim.new(0, 12)
         pad.Parent = tabContent
-
         local leftCol = Instance.new("ScrollingFrame")
         leftCol.Name = "Left"
         leftCol.BackgroundTransparency = 1
@@ -942,11 +869,9 @@ function Buster:CreateWindow(options)
         leftCol.Position = UDim2.new(0, 0, 0, 0)
         leftCol.CanvasSize = UDim2.new(0, 0, 0, 0)
         leftCol.Parent = tabContent
-
         local leftPad = Instance.new("UIPadding")
         leftPad.PaddingBottom = UDim.new(0, 12)
         leftPad.Parent = leftCol
-
         local rightCol = Instance.new("ScrollingFrame")
         rightCol.Name = "Right"
         rightCol.BackgroundTransparency = 1
@@ -956,73 +881,58 @@ function Buster:CreateWindow(options)
         rightCol.Position = UDim2.new(0.5, 16, 0, 0)
         rightCol.CanvasSize = UDim2.new(0, 0, 0, 0)
         rightCol.Parent = tabContent
-
         local rightPad = Instance.new("UIPadding")
         rightPad.PaddingBottom = UDim.new(0, 12)
         rightPad.Parent = rightCol
-
         local function attachLayout(sf)
             local layout = Instance.new("UIListLayout")
             layout.SortOrder = Enum.SortOrder.LayoutOrder
             layout.Padding = UDim.new(0, 10)
             layout.Parent = sf
-            
+           
             local function updateCanvasSize()
                 pcall(function()
                     if layout and layout.AbsoluteContentSize and sf then
-
                         local contentHeight = layout.AbsoluteContentSize.Y + 10
                         sf.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
-
                         task.wait()
                         sf.CanvasPosition = Vector2.new(0, 0)
                     end
                 end)
             end
-            
+           
             pcall(function()
                 layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                     updateCanvasSize()
                 end)
             end)
-
             task.spawn(updateCanvasSize)
             return layout
         end
-
         attachLayout(leftCol)
         attachLayout(rightCol)
-
         local function applyColumnsForWidth(w)
             local isPhone = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-
             if isPhone then
-
                 leftCol.Size = UDim2.new(0.5, -6, 1, 0)
                 leftCol.Position = UDim2.new(0, 0, 0, 0)
-
                 rightCol.Size = UDim2.new(0.5, -6, 1, 0)
                 rightCol.Position = UDim2.new(0.5, 6, 0, 0)
                 return
             end
-
             if w < 720 then
                 leftCol.Size = UDim2.new(1, 0, 0.52, -6)
                 leftCol.Position = UDim2.new(0, 0, 0, 0)
-
                 rightCol.Size = UDim2.new(1, 0, 0.48, -6)
                 rightCol.Position = UDim2.new(0, 0, 0.52, 12)
             else
                 leftCol.Size = UDim2.new(0.5, -8, 1, 0)
                 leftCol.Position = UDim2.new(0, 0, 0, 0)
-
                 rightCol.Size = UDim2.new(0.5, -8, 1, 0)
                 rightCol.Position = UDim2.new(0.5, 16, 0, 0)
             end
         end
-
         applyColumnsForWidth(main.Size.X.Offset)
-
         btn.MouseButton1Click:Connect(function()
             for _, t in ipairs(window._tabs) do
                 setTabActive(t, false)
@@ -1030,19 +940,16 @@ function Buster:CreateWindow(options)
             setTabActive(tab, true)
             window._currentTab = tab
         end)
-
         btn.MouseEnter:Connect(function()
             if window._currentTab ~= tab then
                 tween(btn, { BackgroundColor3 = Theme.Card }, 0.12)
             end
         end)
-
         btn.MouseLeave:Connect(function()
             if window._currentTab ~= tab then
                 tween(btn, { BackgroundColor3 = Theme.Side }, 0.12)
             end
         end)
-
         tab._button = btn
         tab._indicator = indicator
         tab._label = label
@@ -1051,15 +958,12 @@ function Buster:CreateWindow(options)
         tab._left = leftCol
         tab._right = rightCol
         tab._applyColumns = applyColumnsForWidth
-
         local function makePanel(column, panelOptions)
             panelOptions = panelOptions or {}
             local pTitle = panelOptions.Title or "Panel"
             local pIcon = panelOptions.Icon
             local target = (column == "Right") and rightCol or leftCol
-
             local cardInset = 6
-
             local card = Instance.new("Frame")
             card.BackgroundColor3 = Theme.Card
             card.BorderSizePixel = 0
@@ -1068,19 +972,17 @@ function Buster:CreateWindow(options)
             card.Parent = target
             applyCorner(card, 10)
             applyStroke(card, Theme.StrokeSoft, 0.55)
-
             local cardPad = Instance.new("UIPadding")
             cardPad.PaddingTop = UDim.new(0, 10)
             cardPad.PaddingLeft = UDim.new(0, 10)
             cardPad.PaddingRight = UDim.new(0, 10)
             cardPad.PaddingBottom = UDim.new(0, 10)
             cardPad.Parent = card
-
             local cardLayout = Instance.new("UIListLayout")
             cardLayout.SortOrder = Enum.SortOrder.LayoutOrder
             cardLayout.Padding = UDim.new(0, 8)
             cardLayout.Parent = card
-            
+           
             cardLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                 pcall(function()
                     if card and cardLayout then
@@ -1088,7 +990,6 @@ function Buster:CreateWindow(options)
                     end
                 end)
             end)
-
             local headerRow = createRow(card, 22)
             headerRow.LayoutOrder = 1
             local headerIcon = Instance.new("ImageLabel")
@@ -1098,23 +999,20 @@ function Buster:CreateWindow(options)
             headerIcon.Image = pIcon or "rbxassetid://0"
             headerIcon.ImageColor3 = Theme.SubText
             headerIcon.Parent = headerRow
-
             local headerText = createText(headerRow, truncateWithStars(pTitle, 28), 13, true, Theme.Text)
             headerText.Size = UDim2.new(1, -22, 1, 0)
             headerText.Position = UDim2.new(0, 22, 0, 0)
-
             local body = Instance.new("Frame")
             body.BackgroundTransparency = 1
             body.BorderSizePixel = 0
             body.Size = UDim2.new(1, 0, 0, 0)
             body.LayoutOrder = 2
             body.Parent = card
-
             local bodyLayout = Instance.new("UIListLayout")
             bodyLayout.SortOrder = Enum.SortOrder.LayoutOrder
             bodyLayout.Padding = UDim.new(0, 8)
             bodyLayout.Parent = body
-            
+           
             bodyLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                 pcall(function()
                     if body and bodyLayout then
@@ -1122,16 +1020,13 @@ function Buster:CreateWindow(options)
                     end
                 end)
             end)
-
             local panel = {}
             panel.Frame = card
-
             function panel:Divider()
                 local dWrap = createRow(body, 6)
                 createDivider(dWrap)
                 return dWrap
             end
-
             function panel:CreateToggle(opt)
                 opt = opt or {}
                 local success = pcall(function()
@@ -1148,17 +1043,14 @@ function Buster:CreateWindow(options)
                         ic.Parent = row
                         x = 22
                     end
-
                     local lbl = createText(row, truncateWithStars(opt.Name or "Toggle", 30), 12, false, Theme.Text)
                     lbl.Size = UDim2.new(1, -40 - x, 1, 0)
                     lbl.Position = UDim2.new(0, x, 0, 0)
-
                     local tWrap = Instance.new("Frame")
                     tWrap.BackgroundTransparency = 1
                     tWrap.Size = UDim2.new(0, 22, 0, 22)
                     tWrap.Position = UDim2.new(1, -22, 0.5, -11)
                     tWrap.Parent = row
-
                     local cb = opt.Callback or function() end
                     return createSquareToggle(tWrap, opt.Default or false, cb)
                 end)
@@ -1166,7 +1058,6 @@ function Buster:CreateWindow(options)
                     warn("Failed to create toggle:", opt.Name)
                 end
             end
-
             function panel:CreateLabel(opt)
                 if type(opt) == "string" then
                     opt = { Text = opt }
@@ -1178,7 +1069,6 @@ function Buster:CreateWindow(options)
                 lbl.TextXAlignment = opt.AlignRight and Enum.TextXAlignment.Right or Enum.TextXAlignment.Left
                 return lbl
             end
-
             function panel:CreateButton(opt)
                 opt = opt or {}
                 local row = createRow(body, 32)
@@ -1196,11 +1086,11 @@ function Buster:CreateWindow(options)
                 btn2.Parent = row
                 applyCorner(btn2, 7)
                 applyStroke(btn2, Theme.Stroke, 0.5)
-                
+               
                 local textPadding = Instance.new("UIPadding")
                 textPadding.PaddingLeft = UDim.new(0, 12)
                 textPadding.Parent = btn2
-                
+               
                 btn2.MouseEnter:Connect(function()
                     tween(btn2, { BackgroundColor3 = Color3.fromRGB(60, 63, 70) }, 0.12)
                 end)
@@ -1212,7 +1102,6 @@ function Buster:CreateWindow(options)
                 end)
                 return btn2
             end
-
             function panel:CreateSlider(opt)
                 opt = opt or {}
                 local nameText = opt.Name or "Slider"
@@ -1222,17 +1111,14 @@ function Buster:CreateWindow(options)
                 local step = opt.Increment or 1
                 local suffix = opt.Suffix or "%"
                 local cb = opt.Callback or function() end
-
                 local wrap = Instance.new("Frame")
                 wrap.BackgroundTransparency = 1
                 wrap.BorderSizePixel = 0
                 wrap.Size = UDim2.new(1, 0, 0, 46)
                 wrap.Parent = body
-
                 local titleRow = createRow(wrap, 18)
                 local lbl = createText(titleRow, nameText, 12, false, Theme.Text)
                 lbl.Size = UDim2.new(0.7, 0, 1, 0)
-
                 local val = Instance.new("TextLabel")
                 val.BackgroundTransparency = 1
                 val.Size = UDim2.new(0.3, 0, 1, 0)
@@ -1243,7 +1129,6 @@ function Buster:CreateWindow(options)
                 val.TextSize = 11
                 val.Font = Enum.Font.Gotham
                 val.Parent = titleRow
-
                 local track = Instance.new("Frame")
                 track.BorderSizePixel = 0
                 track.BackgroundColor3 = Theme.Track
@@ -1252,14 +1137,12 @@ function Buster:CreateWindow(options)
                 track.Parent = wrap
                 applyCorner(track, 3)
                 applyStroke(track, Theme.StrokeSoft, 0.25)
-
                 local fill = Instance.new("Frame")
                 fill.BorderSizePixel = 0
                 fill.BackgroundColor3 = Theme.Accent
                 fill.Size = UDim2.new(0, 0, 1, 0)
                 fill.Parent = track
                 applyCorner(fill, 3)
-
                 local knob = Instance.new("Frame")
                 knob.BorderSizePixel = 0
                 knob.BackgroundColor3 = Theme.White
@@ -1268,15 +1151,12 @@ function Buster:CreateWindow(options)
                 knob.Parent = track
                 applyCorner(knob, 6)
                 applyStroke(knob, Theme.StrokeSoft, 0.35)
-
                 local current = default
                 local dragging = false
                 local dragInput
-
                 local function formatValue(v)
                     val.Text = tostring(v) .. "/" .. tostring(max) .. suffix
                 end
-
                 local function setValue(v)
                     v = clamp(v, min, max)
                     v = math.floor((v - min) / step + 0.5) * step + min
@@ -1287,16 +1167,13 @@ function Buster:CreateWindow(options)
                     formatValue(v)
                     pcall(cb, v)
                 end
-
                 setValue(default)
-
                 local function updateFromX(x)
                     local rel = x - track.AbsolutePosition.X
                     local denom = track.AbsoluteSize.X
                     local pct = (denom <= 0) and 0 or clamp(rel / denom, 0, 1)
                     setValue(min + (max - min) * pct)
                 end
-
                 track.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         dragging = true
@@ -1304,7 +1181,6 @@ function Buster:CreateWindow(options)
                         updateFromX(input.Position.X)
                     end
                 end)
-
                 track.InputEnded:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         if input == dragInput then
@@ -1313,13 +1189,11 @@ function Buster:CreateWindow(options)
                         end
                     end
                 end)
-
                 UserInputService.InputChanged:Connect(function(input)
                     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                         updateFromX(input.Position.X)
                     end
                 end)
-
                 UserInputService.InputEnded:Connect(function(input)
                     if input == dragInput or (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
                         if dragging then
@@ -1328,7 +1202,6 @@ function Buster:CreateWindow(options)
                         end
                     end
                 end)
-
                 knob.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         dragging = true
@@ -1336,7 +1209,6 @@ function Buster:CreateWindow(options)
                         updateFromX(input.Position.X)
                     end
                 end)
-
                 knob.InputEnded:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         if input == dragInput then
@@ -1345,7 +1217,6 @@ function Buster:CreateWindow(options)
                         end
                     end
                 end)
-
                 return {
                     SetValue = function(_, v)
                         setValue(v)
@@ -1355,7 +1226,6 @@ function Buster:CreateWindow(options)
                     end,
                 }
             end
-
             function panel:CreateKeybind(opt)
                 opt = opt or {}
                 local row = createRow(body, 28)
@@ -1371,11 +1241,9 @@ function Buster:CreateWindow(options)
                     ic.Parent = row
                     x = 22
                 end
-
                 local lbl = createText(row, opt.Name or "Keybind", 12, false, Theme.Text)
                 lbl.Size = UDim2.new(1, -130 - x, 1, 0)
                 lbl.Position = UDim2.new(0, x, 0, 0)
-
                 local keyBtn = Instance.new("TextButton")
                 keyBtn.AutoButtonColor = false
                 keyBtn.BorderSizePixel = 0
@@ -1389,23 +1257,19 @@ function Buster:CreateWindow(options)
                 keyBtn.Parent = row
                 applyCorner(keyBtn, 7)
                 applyStroke(keyBtn, Theme.StrokeSoft, 0.45)
-
                 local current = opt.Default or Enum.KeyCode.LeftControl
                 local listening = false
                 local cb = opt.Callback or function() end
-
                 keyBtn.MouseButton1Click:Connect(function()
                     listening = true
                     window._keybindListening = true
                     keyBtn.Text = "Press key"
                     keyBtn.TextColor3 = Theme.Accent
                 end)
-
                 UserInputService.InputBegan:Connect(function(input)
                     if not listening then
                         return
                     end
-
                     if input.UserInputType == Enum.UserInputType.Keyboard then
                         if input.KeyCode == Enum.KeyCode.Backspace then
                             current = nil
@@ -1420,7 +1284,6 @@ function Buster:CreateWindow(options)
                         pcall(cb, current)
                         return
                     end
-
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
                         current = input.UserInputType
                         keyBtn.Text = (current == Enum.UserInputType.MouseButton1 and "Mouse1") or "Mouse2"
@@ -1431,7 +1294,6 @@ function Buster:CreateWindow(options)
                         return
                     end
                 end)
-
                 return {
                     SetValue = function(_, v)
                         current = v
@@ -1450,26 +1312,22 @@ function Buster:CreateWindow(options)
                     end,
                 }
             end
-
             function panel:CreateDropdown(opt)
                 opt = opt or {}
                 local list = opt.List or {}
                 local current = opt.Default or list[1] or "None"
                 local cb = opt.Callback or function() end
                 local labelText = opt.Label
-
                 local wrap = Instance.new("Frame")
                 wrap.BackgroundTransparency = 1
                 wrap.BorderSizePixel = 0
                 wrap.Size = UDim2.new(1, 0, 0, (labelText and labelText ~= "") and 52 or 34)
                 wrap.Parent = body
-
                 if labelText and labelText ~= "" then
                     local lbl = createText(wrap, labelText, 12, false, Theme.Text)
                     lbl.Size = UDim2.new(1, 0, 0, 16)
                     lbl.Position = UDim2.new(0, 0, 0, 0)
                 end
-
                 local field = Instance.new("TextButton")
                 field.AutoButtonColor = false
                 field.BorderSizePixel = 0
@@ -1480,7 +1338,6 @@ function Buster:CreateWindow(options)
                 field.Parent = wrap
                 applyCorner(field, 7)
                 local fieldStroke = applyStroke(field, Theme.StrokeSoft, 0.25)
-
                 local valueLabel = Instance.new("TextLabel")
                 valueLabel.BackgroundTransparency = 1
                 valueLabel.BorderSizePixel = 0
@@ -1493,7 +1350,6 @@ function Buster:CreateWindow(options)
                 valueLabel.TextSize = 11
                 valueLabel.Font = Enum.Font.Gotham
                 valueLabel.Parent = field
-
                 local arrows = Instance.new("Frame")
                 arrows.BackgroundTransparency = 1
                 arrows.BorderSizePixel = 0
@@ -1501,7 +1357,6 @@ function Buster:CreateWindow(options)
                 arrows.Position = UDim2.new(1, -22, 0.5, -9)
                 arrows.Parent = field
                 arrows.ZIndex = field.ZIndex + 1
-
                 local arrowUp = Instance.new("TextLabel")
                 arrowUp.BackgroundTransparency = 1
                 arrowUp.Size = UDim2.new(1, 0, 0.5, 0)
@@ -1513,7 +1368,6 @@ function Buster:CreateWindow(options)
                 arrowUp.TextXAlignment = Enum.TextXAlignment.Center
                 arrowUp.TextYAlignment = Enum.TextYAlignment.Center
                 arrowUp.Parent = arrows
-
                 local arrowDown = Instance.new("TextLabel")
                 arrowDown.BackgroundTransparency = 1
                 arrowDown.Size = UDim2.new(1, 0, 0.5, 0)
@@ -1525,7 +1379,6 @@ function Buster:CreateWindow(options)
                 arrowDown.TextXAlignment = Enum.TextXAlignment.Center
                 arrowDown.TextYAlignment = Enum.TextYAlignment.Center
                 arrowDown.Parent = arrows
-
                 local catcher = Instance.new("TextButton")
                 catcher.Name = "DropdownCatcher"
                 catcher.AutoButtonColor = false
@@ -1537,7 +1390,6 @@ function Buster:CreateWindow(options)
                 catcher.Visible = false
                 catcher.ZIndex = 10_005
                 catcher.Parent = window._overlay
-
                 local drop = Instance.new("ScrollingFrame")
                 drop.Name = "DropdownList"
                 drop.Visible = false
@@ -1554,34 +1406,28 @@ function Buster:CreateWindow(options)
                 drop.Parent = window._overlay
                 applyCorner(drop, 7)
                 local dropStroke = applyStroke(drop, Theme.StrokeSoft, 0.25)
-
                 local listLayout = Instance.new("UIListLayout")
                 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 listLayout.Padding = UDim.new(0, 2)
                 listLayout.Parent = drop
-
                 local listPad = Instance.new("UIPadding")
                 listPad.PaddingTop = UDim.new(0, 6)
                 listPad.PaddingBottom = UDim.new(0, 6)
                 listPad.PaddingLeft = UDim.new(0, 4)
                 listPad.PaddingRight = UDim.new(0, 4)
                 listPad.Parent = drop
-
                 listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                     drop.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 12)
                 end)
-
                 local expanded = false
                 local openUp = false
                 local fieldHovered = false
                 local dropHovered = false
-
                 local function setStrokeHover(isHover)
                     local c = isHover and Theme.Stroke or Theme.StrokeSoft
                     tween(fieldStroke, { Color = c }, 0.12)
                     tween(dropStroke, { Color = c }, 0.12)
                 end
-
                 local function placeDrop(targetHeight)
                     local absPos = field.AbsolutePosition
                     local absSize = field.AbsoluteSize
@@ -1589,18 +1435,14 @@ function Buster:CreateWindow(options)
                     local h = targetHeight or drop.Size.Y.Offset
                     local belowSpace = viewport.Y - (absPos.Y + absSize.Y)
                     openUp = belowSpace < (h + 18)
-
                     local y = absPos.Y + absSize.Y + 4
                     if openUp then
                         y = absPos.Y - h - 4
                     end
-
                     drop.Position = UDim2.fromOffset(absPos.X, y)
                     drop.Size = UDim2.fromOffset(absSize.X, drop.Size.Y.Offset)
                 end
-
                 local function startTracking()
-
                     task.spawn(function()
                         while expanded and drop.Visible and drop.Parent do
                             placeDrop(drop.Size.Y.Offset)
@@ -1608,7 +1450,6 @@ function Buster:CreateWindow(options)
                         end
                     end)
                 end
-
                 local function rebuild(items)
                     for _, ch in ipairs(drop:GetChildren()) do
                         if ch:IsA("TextButton") or ch:IsA("Frame") then
@@ -1620,7 +1461,6 @@ function Buster:CreateWindow(options)
                     for i, item in ipairs(items) do
                         local optWrap = Instance.new("Frame")
                         optWrap.Name = "OptionWrapper"
-
                         optWrap.BackgroundColor3 = Theme.Card2
                         optWrap.BackgroundTransparency = 1
                         optWrap.BorderSizePixel = 0
@@ -1629,12 +1469,10 @@ function Buster:CreateWindow(options)
                         optWrap.Parent = drop
                         optWrap.ZIndex = 10_015
                         applyCorner(optWrap, 6)
-
                         local optPad = Instance.new("UIPadding")
                         optPad.PaddingLeft = UDim.new(0, 8)
                         optPad.PaddingRight = UDim.new(0, 6)
                         optPad.Parent = optWrap
-
                         local it = Instance.new("TextButton")
                         it.AutoButtonColor = false
                         it.BorderSizePixel = 0
@@ -1644,7 +1482,6 @@ function Buster:CreateWindow(options)
                         it.Text = ""
                         it.ZIndex = 10_020
                         it.Parent = optWrap
-
                         local itemLabel = Instance.new("TextLabel")
                         itemLabel.BackgroundTransparency = 1
                         itemLabel.Size = UDim2.new(1, -18, 1, 0)
@@ -1656,29 +1493,24 @@ function Buster:CreateWindow(options)
                         itemLabel.TextXAlignment = Enum.TextXAlignment.Left
                         itemLabel.ZIndex = 10_018
                         itemLabel.Parent = optWrap
-
                         local isActive = tostring(item) == tostring(current)
-
                         local function activate()
                             isActive = true
                             tween(optWrap, { BackgroundTransparency = 0.5 }, 0.12)
                             tween(itemLabel, { TextColor3 = Theme.Text }, 0.12)
                             tween(optPad, { PaddingLeft = UDim.new(0, 12) }, 0.12)
                         end
-
                         local function deactivate()
                             isActive = false
                             tween(optWrap, { BackgroundTransparency = 1 }, 0.12)
                             tween(itemLabel, { TextColor3 = Theme.SubText }, 0.12)
                             tween(optPad, { PaddingLeft = UDim.new(0, 8) }, 0.12)
                         end
-
                         if isActive then
                             optWrap.BackgroundTransparency = 0.5
                             itemLabel.TextColor3 = Theme.Text
                             optPad.PaddingLeft = UDim.new(0, 12)
                         end
-
                         it.MouseEnter:Connect(function()
                             if not isActive then
                                 tween(optWrap, { BackgroundTransparency = 0.8 }, 0.12)
@@ -1686,7 +1518,6 @@ function Buster:CreateWindow(options)
                                 tween(optPad, { PaddingLeft = UDim.new(0, 12) }, 0.12)
                             end
                         end)
-
                         it.MouseLeave:Connect(function()
                             if not isActive then
                                 tween(optWrap, { BackgroundTransparency = 1 }, 0.12)
@@ -1694,7 +1525,6 @@ function Buster:CreateWindow(options)
                                 tween(optPad, { PaddingLeft = UDim.new(0, 8) }, 0.12)
                             end
                         end)
-
                         it.MouseButton1Click:Connect(function()
                             current = item
                             valueLabel.Text = truncateWithStars(tostring(current), 26)
@@ -1712,15 +1542,12 @@ function Buster:CreateWindow(options)
                         end)
                     end
                 end
-
                 rebuild(list)
-
                 field.MouseEnter:Connect(function()
                     fieldHovered = true
                     tween(field, { BackgroundColor3 = Theme.Track }, 0.12)
                     setStrokeHover(true)
                 end)
-
                 field.MouseLeave:Connect(function()
                     fieldHovered = false
                     if not expanded then
@@ -1728,19 +1555,16 @@ function Buster:CreateWindow(options)
                         setStrokeHover(false)
                     end
                 end)
-
                 drop.MouseEnter:Connect(function()
                     dropHovered = true
                     setStrokeHover(true)
                 end)
-
                 drop.MouseLeave:Connect(function()
                     dropHovered = false
                     if not fieldHovered and not expanded then
                         setStrokeHover(false)
                     end
                 end)
-
                 field.MouseButton1Click:Connect(function()
                     expanded = not expanded
                     if expanded then
@@ -1771,7 +1595,6 @@ function Buster:CreateWindow(options)
                         end
                     end
                 end)
-
                 catcher.MouseButton1Click:Connect(function()
                     if expanded then
                         expanded = false
@@ -1790,7 +1613,6 @@ function Buster:CreateWindow(options)
                         end
                     end
                 end)
-
                 return {
                     SetValue = function(_, v)
                         current = v
@@ -1823,29 +1645,22 @@ function Buster:CreateWindow(options)
                     end,
                 }
             end
-
             panel.CreateButton = panel.CreateButton
-
             return panel
         end
-
         function tab:CreatePanel(panelOptions)
             return makePanel(panelOptions and panelOptions.Column or "Left", panelOptions)
         end
-
         function tab:CreateSection(sectionName)
             return makePanel("Left", { Title = sectionName })
         end
-
         table.insert(window._tabs, tab)
         if #window._tabs == 1 then
             setTabActive(tab, true)
             window._currentTab = tab
         end
-
         return tab
     end
-
     local notifyHost = Instance.new("Frame")
     notifyHost.Name = "Notifications"
     notifyHost.BackgroundTransparency = 1
@@ -1854,19 +1669,16 @@ function Buster:CreateWindow(options)
     notifyHost.Position = UDim2.new(1, -332, 0, 12)
     notifyHost.ZIndex = 10_100
     notifyHost.Parent = overlay
-
     local notifyLayout = Instance.new("UIListLayout")
     notifyLayout.SortOrder = Enum.SortOrder.LayoutOrder
     notifyLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
     notifyLayout.Padding = UDim.new(0, 8)
     notifyLayout.Parent = notifyHost
-
     function window:Notify(opt)
         opt = opt or {}
-        local nTitle = opt.Title or titleText
+        local n = nTitle = opt.Title or titleText
         local nText = opt.Text or ""
         local duration = opt.Duration or 2.5
-
         local toast = Instance.new("Frame")
         toast.BackgroundColor3 = Theme.Card
         toast.BorderSizePixel = 0
@@ -1875,26 +1687,21 @@ function Buster:CreateWindow(options)
         toast.Parent = notifyHost
         applyCorner(toast, 10)
         applyStroke(toast, Theme.StrokeSoft, 0.55)
-
         local pad = Instance.new("UIPadding")
         pad.PaddingTop = UDim.new(0, 8)
         pad.PaddingBottom = UDim.new(0, 8)
         pad.PaddingLeft = UDim.new(0, 10)
         pad.PaddingRight = UDim.new(0, 10)
         pad.Parent = toast
-
         local t1 = createText(toast, tostring(nTitle), 12, true, Theme.Text)
         t1.Size = UDim2.new(1, 0, 0, 18)
         t1.ZIndex = 10_120
-
         local t2 = createText(toast, tostring(nText), 11, false, Theme.SubText)
         t2.Size = UDim2.new(1, 0, 0, 16)
         t2.Position = UDim2.new(0, 0, 0, 20)
         t2.ZIndex = 10_120
-
         toast.BackgroundTransparency = 1
         tween(toast, { BackgroundTransparency = 0 }, 0.14)
-
         task.delay(duration, function()
             if toast and toast.Parent then
                 tween(toast, { BackgroundTransparency = 1 }, 0.14)
@@ -1905,7 +1712,6 @@ function Buster:CreateWindow(options)
             end
         end)
     end
-
     function window:Toggle()
         if not main.Visible then
             main.Visible = true
@@ -1919,48 +1725,38 @@ function Buster:CreateWindow(options)
             main.Visible = false
         end
     end
-
     function window:SetTitle(text)
         window._titleLabel.Text = tostring(text)
     end
-
     function window:SetFooter(text)
         window._subtitleLabel.Text = "| " .. tostring(text)
     end
-
     function window:SetBrandText(text)
         window._brandTextLabel.Text = tostring(text)
         window._brandTextLabel.Visible = true
         window._brandImageLabel.Visible = false
-
         outsideText.Text = tostring(text)
         outsideText.Visible = true
         outsideImg.Visible = false
     end
-
     function window:SetBrandImage(image)
         window._brandImageLabel.Image = tostring(image or "")
         window._brandImageLabel.Visible = window._brandImageLabel.Image ~= ""
         window._brandTextLabel.Visible = not window._brandImageLabel.Visible
-
         outsideImg.Image = tostring(image or "")
         outsideImg.Visible = outsideImg.Image ~= ""
         outsideText.Visible = not outsideImg.Visible
     end
-
     function window:Destroy()
         screen:Destroy()
     end
-
     function window:SetToggleKey(key)
         window._toggleKey = key
     end
-
     do
         local settingsTab = window:CreateTab("Settings")
         settingsTab._button.LayoutOrder = 99999
         local panel = settingsTab:CreatePanel({ Column = "Left", Title = "Settings" })
-
         panel:CreateKeybind({
             Name = "Toggle UI Key",
             Default = defaultToggleKey,
@@ -1975,7 +1771,6 @@ function Buster:CreateWindow(options)
             end,
         })
     end
-
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if gameProcessed then
             return
@@ -1987,55 +1782,45 @@ function Buster:CreateWindow(options)
         if not key then
             return
         end
-
         if typeof(key) == "EnumItem" and key.EnumType == Enum.KeyCode then
             if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == key then
                 window:Toggle()
             end
             return
         end
-
         if typeof(key) == "EnumItem" and key.EnumType == Enum.UserInputType then
             if input.UserInputType == key then
                 window:Toggle()
             end
         end
     end)
-
     outsideToggle.MouseButton1Click:Connect(function()
         window:Toggle()
         if isMobileToggle and outsideText and outsideText.Parent then
             outsideText.Text = main.Visible and "Close" or "Open"
         end
     end)
-
     return window
 end
-
 function Buster:CreateHomeTab(window, options)
     options = options or {}
-
     local tabName = options.Name or "Home"
     local tabIcon = options.Icon
     local homeTab = window:CreateTab({ Name = tabName, Icon = tabIcon })
-
     local RunService = game:GetService("RunService")
     local StatsService = game:GetService("Stats")
     local MarketplaceService = game:GetService("MarketplaceService")
     local LocalizationService = game:GetService("LocalizationService")
-
     local discordInvite = options.DiscordInvite or ""
     local supportedExecutors = options.SupportedExecutors or {}
     local unsupportedExecutors = options.UnsupportedExecutors or {}
     local changelog = options.Changelog or {}
-
     local content = homeTab._content
     local leftCol = content and content:FindFirstChild("Left")
     local rightCol = content and content:FindFirstChild("Right")
     if not content or not leftCol or not rightCol then
         return homeTab
     end
-
     for _, child in ipairs(content:GetChildren()) do
         if string.sub(child.Name, 1, 4) == "Home" then
             child:Destroy()
@@ -2048,7 +1833,6 @@ function Buster:CreateHomeTab(window, options)
             end
         end
     end
-
     local function safeDestroyConnection(conn)
         if conn and typeof(conn) == "RBXScriptConnection" then
             pcall(function()
@@ -2056,7 +1840,6 @@ function Buster:CreateHomeTab(window, options)
             end)
         end
     end
-
     local destroyed = false
     local connections = {}
     content.AncestryChanged:Connect(function(_, parent)
@@ -2067,7 +1850,6 @@ function Buster:CreateHomeTab(window, options)
             end
         end
     end)
-
     local function createCard(parent, titleText, subtitleText, iconImage, fixedHeight)
         local cardInset = 6
         local card = Instance.new("Frame")
@@ -2079,7 +1861,6 @@ function Buster:CreateHomeTab(window, options)
         card.Parent = parent
         applyCorner(card, 10)
         applyStroke(card, Theme.StrokeSoft, 0.55)
-
         local cardPad = Instance.new("UIPadding")
         cardPad.Name = "HomePad"
         cardPad.PaddingTop = UDim.new(0, 10)
@@ -2087,14 +1868,12 @@ function Buster:CreateHomeTab(window, options)
         cardPad.PaddingRight = UDim.new(0, 10)
         cardPad.PaddingBottom = UDim.new(0, 10)
         cardPad.Parent = card
-
         local headerRow = Instance.new("Frame")
         headerRow.Name = "HomeHeader"
         headerRow.BackgroundTransparency = 1
         headerRow.BorderSizePixel = 0
         headerRow.Size = UDim2.new(1, 0, 0, 22)
         headerRow.Parent = card
-
         local icon = Instance.new("ImageLabel")
         icon.Name = "HomeIcon"
         icon.BackgroundTransparency = 1
@@ -2105,13 +1884,11 @@ function Buster:CreateHomeTab(window, options)
         icon.ImageColor3 = Theme.Text
         icon.Visible = icon.Image ~= ""
         icon.Parent = headerRow
-
         local title = createText(headerRow, titleText or "", 13, true, Theme.Text)
         title.Name = "HomeTitle"
         title.Size = UDim2.new(1, -22, 1, 0)
         title.Position = UDim2.new(0, icon.Visible and 22 or 0, 0, 0)
         title.TextXAlignment = Enum.TextXAlignment.Left
-
         local subtitle = nil
         if subtitleText and subtitleText ~= "" then
             subtitle = createText(card, subtitleText, 11, false, Theme.SubText)
@@ -2120,7 +1897,6 @@ function Buster:CreateHomeTab(window, options)
             subtitle.Position = UDim2.new(0, 0, 0, 26)
             subtitle.TextXAlignment = Enum.TextXAlignment.Left
         end
-
         local body = Instance.new("Frame")
         body.Name = "HomeBody"
         body.BackgroundTransparency = 1
@@ -2128,14 +1904,11 @@ function Buster:CreateHomeTab(window, options)
         body.Position = UDim2.new(0, 0, 0, subtitle and 46 or 28)
         body.Size = UDim2.new(1, 0, 1, -(subtitle and 46 or 28))
         body.Parent = card
-
         return card, body
     end
-
     local welcomeHeight = 110
     local topGap = 12
     local topOffset = welcomeHeight + topGap
-
     local welcome = Instance.new("Frame")
     welcome.Name = "HomeWelcome"
     welcome.BackgroundColor3 = Theme.Card
@@ -2145,7 +1918,6 @@ function Buster:CreateHomeTab(window, options)
     welcome.Parent = content
     applyCorner(welcome, 12)
     applyStroke(welcome, Theme.Accent, 0.75)
-
     local backdrop = Instance.new("ImageLabel")
     backdrop.Name = "HomeBackdrop"
     backdrop.BackgroundTransparency = 1
@@ -2157,7 +1929,6 @@ function Buster:CreateHomeTab(window, options)
     backdrop.ZIndex = 1
     backdrop.Parent = welcome
     applyCorner(backdrop, 12)
-
     if options.Backdrop ~= nil then
         if options.Backdrop == 0 then
             backdrop.Image = "https://www.roblox.com/asset-thumbnail/image?assetId=" .. game.PlaceId .. "&width=768&height=432&format=png"
@@ -2165,7 +1936,6 @@ function Buster:CreateHomeTab(window, options)
             backdrop.Image = "rbxassetid://" .. tostring(options.Backdrop)
         end
     end
-
     local backdropFade = Instance.new("Frame")
     backdropFade.Name = "HomeBackdropFade"
     backdropFade.BackgroundColor3 = Theme.Card
@@ -2175,7 +1945,6 @@ function Buster:CreateHomeTab(window, options)
     backdropFade.ZIndex = 2
     backdropFade.Parent = welcome
     applyCorner(backdropFade, 12)
-
     local welcomePad = Instance.new("UIPadding")
     welcomePad.Name = "HomeWelcomePad"
     welcomePad.PaddingTop = UDim.new(0, 12)
@@ -2183,7 +1952,6 @@ function Buster:CreateHomeTab(window, options)
     welcomePad.PaddingRight = UDim.new(0, 12)
     welcomePad.PaddingBottom = UDim.new(0, 12)
     welcomePad.Parent = welcome
-
     local welcomeContent = Instance.new("Frame")
     welcomeContent.Name = "HomeWelcomeContent"
     welcomeContent.BackgroundTransparency = 1
@@ -2191,7 +1959,6 @@ function Buster:CreateHomeTab(window, options)
     welcomeContent.Size = UDim2.new(1, 0, 1, 0)
     welcomeContent.ZIndex = 3
     welcomeContent.Parent = welcome
-
     local avatarWrap = Instance.new("Frame")
     avatarWrap.Name = "HomeAvatarWrap"
     avatarWrap.BackgroundColor3 = Theme.Card2
@@ -2202,7 +1969,6 @@ function Buster:CreateHomeTab(window, options)
     avatarWrap.Parent = welcomeContent
     applyCorner(avatarWrap, 27)
     applyStroke(avatarWrap, Theme.StrokeSoft, 0.65)
-
     local avatarImg = Instance.new("ImageLabel")
     avatarImg.Name = "HomeAvatar"
     avatarImg.BackgroundTransparency = 1
@@ -2212,7 +1978,6 @@ function Buster:CreateHomeTab(window, options)
     avatarImg.ZIndex = 5
     avatarImg.Parent = avatarWrap
     applyCorner(avatarImg, 27)
-
     task.spawn(function()
         pcall(function()
             local lp = Players.LocalPlayer
@@ -2225,20 +1990,17 @@ function Buster:CreateHomeTab(window, options)
             end
         end)
     end)
-
     local welcomeTitle = createText(welcomeContent, "Welcome, " .. tostring((Players.LocalPlayer and Players.LocalPlayer.DisplayName) or "User"), 18, true, Theme.Text)
     welcomeTitle.Name = "HomeWelcomeTitle"
     welcomeTitle.Position = UDim2.new(0, 66, 0, 18)
     welcomeTitle.Size = UDim2.new(1, -220, 0, 22)
     welcomeTitle.ZIndex = 5
-
     local welcomeSub = createText(welcomeContent, "", 12, false, Theme.Text)
     welcomeSub.Name = "HomeWelcomeSub"
     welcomeSub.Position = UDim2.new(0, 66, 0, 42)
     welcomeSub.Size = UDim2.new(1, -220, 0, 18)
     welcomeSub.ZIndex = 5
     welcomeSub.TextTransparency = 0.25
-
     local timeLabel = createText(welcomeContent, "", 12, false, Theme.Text)
     timeLabel.Name = "HomeTime"
     timeLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -2246,7 +2008,6 @@ function Buster:CreateHomeTab(window, options)
     timeLabel.Size = UDim2.new(0, 200, 0, 18)
     timeLabel.ZIndex = 5
     timeLabel.TextTransparency = 0.25
-
     local dateLabel = createText(welcomeContent, "", 12, false, Theme.Text)
     dateLabel.Name = "HomeDate"
     dateLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -2254,7 +2015,6 @@ function Buster:CreateHomeTab(window, options)
     dateLabel.Size = UDim2.new(0, 200, 0, 18)
     dateLabel.ZIndex = 5
     dateLabel.TextTransparency = 0.25
-
     local function getGreetingString(hour)
         if hour >= 4 and hour < 12 then
             return "Good Morning!"
@@ -2267,7 +2027,6 @@ function Buster:CreateHomeTab(window, options)
         end
         return "Jeez you should be asleep..."
     end
-
     task.spawn(function()
         while not destroyed and welcome and welcome.Parent do
             local t = os.date("*t")
@@ -2280,38 +2039,30 @@ function Buster:CreateHomeTab(window, options)
             task.wait(1)
         end
     end)
-
     local function applyHomeColumns(w)
         local h = content.AbsoluteSize.Y
         local remaining = math.max(0, h - topOffset)
-
         if w < 720 then
             local leftH = math.max(0, math.floor(remaining * 0.52 - 6))
             local rightH = math.max(0, remaining - leftH - 12)
-
             leftCol.Size = UDim2.new(1, 0, 0, leftH)
             leftCol.Position = UDim2.new(0, 0, 0, topOffset)
-
             rightCol.Size = UDim2.new(1, 0, 0, rightH)
             rightCol.Position = UDim2.new(0, 0, 0, topOffset + leftH + 12)
         else
             leftCol.Size = UDim2.new(0.58, -8, 1, -topOffset)
             leftCol.Position = UDim2.new(0, 0, 0, topOffset)
-
             rightCol.Size = UDim2.new(0.42, -8, 1, -topOffset)
             rightCol.Position = UDim2.new(0.58, 16, 0, topOffset)
         end
     end
-
     homeTab._applyColumns = applyHomeColumns
     applyHomeColumns(window._main.Size.X.Offset)
     table.insert(connections, content:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         applyHomeColumns(window._main.Size.X.Offset)
     end))
-
     do
         local discordCard = createCard(leftCol, "Discord", "Tap to join the discord of\nyour script.", options.DiscordIcon, 88)
-
         local discordInteract = Instance.new("TextButton")
         discordInteract.Name = "HomeDiscordInteract"
         discordInteract.AutoButtonColor = false
@@ -2321,7 +2072,6 @@ function Buster:CreateHomeTab(window, options)
         discordInteract.Size = UDim2.new(1, 0, 1, 0)
         discordInteract.Position = UDim2.new(0, 0, 0, 0)
         discordInteract.Parent = discordCard
-
         discordInteract.MouseEnter:Connect(function()
             tween(discordCard, { BackgroundColor3 = Theme.Card2 }, 0.12)
         end)
@@ -2338,12 +2088,10 @@ function Buster:CreateHomeTab(window, options)
             end)
             window:Notify({ Title = "Discord", Text = "Invite copied", Duration = 2 })
         end)
-
         local gameName = "Unknown"
         pcall(function()
             gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
         end)
-
         local serverCard, serverBody = createCard(
             leftCol,
             "Server",
@@ -2351,20 +2099,17 @@ function Buster:CreateHomeTab(window, options)
             options.ServerIcon,
             250
         )
-
         local grid = Instance.new("Frame")
         grid.Name = "HomeServerGrid"
         grid.BackgroundTransparency = 1
         grid.BorderSizePixel = 0
         grid.Size = UDim2.new(1, 0, 1, 0)
         grid.Parent = serverBody
-
         local gridLayout = Instance.new("UIGridLayout")
         gridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
         gridLayout.CellSize = UDim2.new(0.5, -5, 0, 56)
         gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
         gridLayout.Parent = grid
-
         local function statTile(titleText)
             local tile = Instance.new("Frame")
             tile.Name = "HomeStatTile"
@@ -2373,7 +2118,6 @@ function Buster:CreateHomeTab(window, options)
             tile.Parent = grid
             applyCorner(tile, 10)
             applyStroke(tile, Theme.StrokeSoft, 0.7)
-
             local p = Instance.new("UIPadding")
             p.Name = "HomeStatPad"
             p.PaddingTop = UDim.new(0, 8)
@@ -2381,10 +2125,8 @@ function Buster:CreateHomeTab(window, options)
             p.PaddingRight = UDim.new(0, 10)
             p.PaddingBottom = UDim.new(0, 8)
             p.Parent = tile
-
             local title = createText(tile, titleText, 11, true, Theme.Text)
             title.Size = UDim2.new(1, 0, 0, 16)
-
             local value = createText(tile, "", 11, false, Theme.SubText)
             value.Position = UDim2.new(0, 0, 0, 18)
             value.Size = UDim2.new(1, 0, 0, 30)
@@ -2392,14 +2134,12 @@ function Buster:CreateHomeTab(window, options)
             value.TextYAlignment = Enum.TextYAlignment.Top
             return tile, value
         end
-
         local tilePlayers, valPlayers = statTile("Players")
         local tileCapacity, valCapacity = statTile("Capacity")
         local tileLatency, valLatency = statTile("Latency")
         local tileJoin, valJoin = statTile("Join Script")
         local tileTime, valTime = statTile("Time")
         local tileRegion, valRegion = statTile("Region")
-
         valJoin.Text = "Click to copy"
         local joinInteract = Instance.new("TextButton")
         joinInteract.Name = "HomeJoinInteract"
@@ -2420,7 +2160,6 @@ function Buster:CreateHomeTab(window, options)
             end)
             window:Notify({ Title = "Server", Text = "Join script copied", Duration = 2 })
         end)
-
         local function updateCounts()
             valPlayers.Text = tostring(#Players:GetPlayers()) .. " Players\nIn This Server"
             valCapacity.Text = tostring(Players.MaxPlayers) .. " Players\nCan Join"
@@ -2428,7 +2167,6 @@ function Buster:CreateHomeTab(window, options)
         updateCounts()
         table.insert(connections, Players.PlayerAdded:Connect(updateCounts))
         table.insert(connections, Players.PlayerRemoving:Connect(updateCounts))
-
         task.spawn(function()
             pcall(function()
                 local region = LocalizationService:GetCountryRegionForPlayerAsync(LocalPlayer)
@@ -2437,9 +2175,7 @@ function Buster:CreateHomeTab(window, options)
                 end
             end)
         end)
-
         local startTick = tick()
-
         local function formatElapsed(sec)
             sec = math.max(0, math.floor(sec))
             if sec < 60 then
@@ -2450,10 +2186,8 @@ function Buster:CreateHomeTab(window, options)
             end
             return tostring(math.floor(sec / 3600)) .. "h"
         end
-
         local fpsCounter = 0
         local lastFpsUpdate = tick()
-
         local function getPingMs()
             local ping = nil
             pcall(function()
@@ -2462,7 +2196,6 @@ function Buster:CreateHomeTab(window, options)
             if typeof(ping) == "number" then
                 return math.round(ping)
             end
-
             local netPing = nil
             pcall(function()
                 netPing = LocalPlayer:GetNetworkPing()
@@ -2472,7 +2205,6 @@ function Buster:CreateHomeTab(window, options)
             end
             return 0
         end
-
         table.insert(
             connections,
             RunService.Heartbeat:Connect(function()
@@ -2490,21 +2222,17 @@ function Buster:CreateHomeTab(window, options)
                 end
             end)
         )
-
         local changelogCard, changelogBody = createCard(leftCol, "Changelog", "", options.ChangelogIcon, 250)
         changelogCard.Name = "HomeChangelog"
-
         if changelog[1] then
             local latest = changelog[1]
             local title = createText(changelogBody, tostring(latest.Title or "Latest"), 13, true, Theme.Text)
             title.Size = UDim2.new(1, 0, 0, 18)
-
             if latest.Date then
                 local date = createText(changelogBody, tostring(latest.Date), 11, false, Theme.SubText)
                 date.Position = UDim2.new(0, 0, 0, 20)
                 date.Size = UDim2.new(1, 0, 0, 16)
             end
-
             if latest.Description then
                 local desc = createText(changelogBody, tostring(latest.Description), 11, false, Theme.SubText)
                 desc.Position = UDim2.new(0, 0, 0, 40)
@@ -2518,20 +2246,15 @@ function Buster:CreateHomeTab(window, options)
             empty.TextYAlignment = Enum.TextYAlignment.Top
         end
     end
-
     do
         local accountCard = createCard(rightCol, "Account", "Coming Soon.", options.AccountIcon, 88)
         accountCard.Name = "HomeAccount"
-
         local executorName = (identifyexecutor and identifyexecutor())
             or (getexecutorname and getexecutorname())
             or "Roblox Studio"
-
         local execCard, execBody = createCard(rightCol, tostring(executorName), "", options.ExecutorIcon, 88)
         execCard.Name = "HomeExecutor"
-
         table.insert(unsupportedExecutors, "Roblox Studio")
-
         local execText = "Your Executor Seems To Be\nSupported By This Script."
         if table.find(unsupportedExecutors, executorName) then
             execText = "Your Executor Is Unsupported\nBy This Script."
@@ -2542,117 +2265,14 @@ function Buster:CreateHomeTab(window, options)
         l.Size = UDim2.new(1, 0, 1, 0)
         l.TextWrapped = true
         l.TextYAlignment = Enum.TextYAlignment.Top
-
         local friendsCard, friendsBody = createCard(rightCol, "Friends", "", options.FriendsIcon, 250)
         friendsCard.Name = "HomeFriends"
-
         local grid = Instance.new("Frame")
         grid.Name = "HomeFriendsGrid"
         grid.BackgroundTransparency = 1
         grid.BorderSizePixel = 0
-        grid.Size = UDim2.new(1, 0, 1, 0)
-        grid.Parent = friendsBody
-
-        local gridLayout = Instance.new("UIGridLayout")
-        gridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
-        gridLayout.CellSize = UDim2.new(0.5, -5, 0, 56)
-        gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        gridLayout.Parent = grid
-
-        local function friendTile(titleText)
-            local tile = Instance.new("Frame")
-            tile.Name = "HomeFriendTile"
-            tile.BackgroundColor3 = Theme.Card2
-            tile.BorderSizePixel = 0
-            tile.Parent = grid
-            applyCorner(tile, 10)
-            applyStroke(tile, Theme.StrokeSoft, 0.7)
-
-            local p = Instance.new("UIPadding")
-            p.Name = "HomeFriendPad"
-            p.PaddingTop = UDim.new(0, 8)
-            p.PaddingLeft = UDim.new(0, 10)
-            p.PaddingRight = UDim.new(0, 10)
-            p.PaddingBottom = UDim.new(0, 8)
-            p.Parent = tile
-
-            local title = createText(tile, titleText, 11, true, Theme.Text)
-            title.Size = UDim2.new(1, 0, 0, 16)
-            local value = createText(tile, "0 friends", 11, false, Theme.SubText)
-            value.Position = UDim2.new(0, 0, 0, 18)
-            value.Size = UDim2.new(1, 0, 0, 30)
-            value.TextWrapped = true
-            value.TextYAlignment = Enum.TextYAlignment.Top
-            return value
-        end
-
-        local inServerLabel = friendTile("In Server")
-        local offlineLabel = friendTile("Offline")
-        local onlineLabel = friendTile("Online")
-        local totalLabel = friendTile("Total")
-
-        local friendsCooldown = 0
-        local function checkFriends()
-            if friendsCooldown > 0 then
-                friendsCooldown -= 1
-                return
-            end
-            friendsCooldown = 25
-
-            local lp = Players.LocalPlayer
-            if not (lp and lp.UserId) then
-                return
-            end
-
-            local total = 0
-            local online = 0
-            local inServer = 0
-
-            pcall(function()
-                online = #lp:GetFriendsOnline()
-            end)
-
-            pcall(function()
-                local playersFriends = {}
-                local list = Players:GetFriendsAsync(lp.UserId)
-                while true do
-                    for _, data in list:GetCurrentPage() do
-                        total += 1
-                        table.insert(playersFriends, data)
-                    end
-                    if list.IsFinished then
-                        break
-                    end
-                    list:AdvanceToNextPageAsync()
-                end
-
-                for _, data in ipairs(playersFriends) do
-                    if Players:FindFirstChild(data.Username) then
-                        inServer += 1
-                    end
-                end
-            end)
-
-            local offline = math.max(0, total - online)
-
-            inServerLabel.Text = tostring(inServer) .. " friends"
-            offlineLabel.Text = tostring(offline) .. " friends"
-            onlineLabel.Text = tostring(online) .. " friends"
-            totalLabel.Text = tostring(total) .. " friends"
-        end
-
-        checkFriends()
-        table.insert(
-            connections,
-            RunService.Heartbeat:Connect(function()
-                if destroyed then
-                    return
-                end
-                checkFriends()
-            end)
-        )
-    end
-
+        grid.Size = UDim2.new(1, 0
+            
     return homeTab
 end
 
