@@ -1,63 +1,52 @@
 local Buster = {}
 if not gethui then
-    if getfenv then
-        getfenv().gethui = function() return game:GetService("CoreGui") end
-    end
+    getfenv().gethui = function() return game:GetService("CoreGui") end
 end
 if not syn then
-    if getfenv then
-        getfenv().syn = {}
-    end
+    getfenv().syn = {}
 end
 if not identifyexecutor then
-    if getfenv then
-        getfenv().identifyexecutor = function()
-            if getexecutorname then
-                return getexecutorname()
-            end
-            return "Unknown"
+    getfenv().identifyexecutor = function()
+        if getexecutorname then
+            return getexecutorname()
         end
+        return "Unknown"
     end
 end
 if not getexecutorname then
-    if getfenv then
-        getfenv().getexecutorname = function()
-            if identifyexecutor then
-                return identifyexecutor()
-            end
-            return "Unknown"
+    getfenv().getexecutorname = function()
+        if identifyexecutor then
+            return identifyexecutor()
         end
+        return "Unknown"
     end
 end
 if not request then
-    if getfenv then
-        getfenv().request = function() return {Success = false, StatusCode = 404} end
-    end
+    getfenv().request = function() return {Success = false, StatusCode = 404} end
 end
 if not isnetworkowner then
-    if getfenv then
-        getfenv().isnetworkowner = function() return true end
-    end
+    getfenv().isnetworkowner = function() return true end
 end
 if not setscriptable then
-    if getfenv then
-        getfenv().setscriptable = function() end
-    end
+    getfenv().setscriptable = function() end
 end
 if not getconnections then
-    if getfenv then
-        getfenv().getconnections = function() return {} end
-    end
+    getfenv().getconnections = function() return {} end
 end
 if not firesignal then
-    if getfenv then
-        getfenv().firesignal = function() end
-    end
+    getfenv().firesignal = function() end
 end
 if not fireproximityprompt then
-    if getfenv then
-        getfenv().fireproximityprompt = function() end
-    end
+    getfenv().fireproximityprompt = function() end
+end
+if not isfile then
+    getfenv().isfile = function() return false end
+end
+if not readfile then
+    getfenv().readfile = function() return "" end
+end
+if not writefile then
+    getfenv().writefile = function() end
 end
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -66,6 +55,7 @@ local CoreGui = game:GetService("CoreGui")
 local GuiService = game:GetService("GuiService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+local HttpService = game:GetService("HttpService")
 local function getInsetY()
     local insetY = 0
     pcall(function()
@@ -212,6 +202,50 @@ local function makeDraggable(frame, handle)
         end
     end)
 end
+local function makeResizable(frame, minW, minH)
+    minW = minW or 420
+    minH = minH or 360
+    local resizer = Instance.new("TextButton")
+    resizer.Name = "Resizer"
+    resizer.BackgroundTransparency = 1
+    resizer.Text = "↘"
+    resizer.TextColor3 = Theme.SubText
+    resizer.TextSize = 14
+    resizer.Size = UDim2.new(0, 20, 0, 20)
+    resizer.Position = UDim2.new(1, 0, 1, 0)
+    resizer.AnchorPoint = Vector2.new(1, 1)
+    resizer.AutoButtonColor = false
+    resizer.Parent = frame
+    local resizing = false
+    local startSize
+    local startInputPos
+    resizer.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            resizing = true
+            startSize = frame.Size
+            startInputPos = input.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if not resizing then
+            return
+        end
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            local delta = input.Position - startInputPos
+            local newW = startSize.X.Offset + delta.X
+            local newH = startSize.Y.Offset + delta.Y
+            local viewport = Camera.ViewportSize
+            newW = clamp(newW, minW, viewport.X - 40)
+            newH = clamp(newH, minH, viewport.Y - getInsetY() - 40)
+            frame.Size = UDim2.new(0, newW, 0, newH)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            resizing = false
+        end
+    end)
+end
 local function truncateWithStars(text, maxChars)
     text = tostring(text or "")
     maxChars = maxChars or 24
@@ -316,6 +350,22 @@ function Buster:CreateWindow(options)
     local forcedSize = options.Size
     local enableGroups = options.Groups == true
     local defaultToggleKey = options.ToggleKey or Enum.KeyCode.RightShift
+    local configFile = "buster_config.json"
+    local savedConfig = {}
+    if isfile(configFile) then
+        local success, data = pcall(function()
+            return HttpService:JSONDecode(readfile(configFile))
+        end)
+        if success then
+            savedConfig = data
+            if savedConfig.toggle_key then
+                defaultToggleKey = Enum.KeyCode[savedConfig.toggle_key] or defaultToggleKey
+            end
+            if savedConfig.accent and savedConfig.accent.r and savedConfig.accent.g and savedConfig.accent.b then
+                Theme.Accent = Color3.fromRGB(savedConfig.accent.r, savedConfig.accent.g, savedConfig.accent.b)
+            end
+        end
+    end
     local function computeWindowSize()
         local isPhone = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
         local viewport = (Camera and Camera.ViewportSize) or Vector2.new(1280, 720)
@@ -408,45 +458,7 @@ function Buster:CreateWindow(options)
     main.Parent = screen
     applyCorner(main, 10)
     applyStroke(main, Theme.Stroke, 0.6)
-    local isPhone = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-    if not isPhone and not forcedSize then
-        local resizeGrip = Instance.new("TextButton")
-        resizeGrip.Name = "ResizeGrip"
-        resizeGrip.AutoButtonColor = false
-        resizeGrip.Text = "↘"
-        resizeGrip.TextColor3 = Theme.SubText
-        resizeGrip.TextSize = 14
-        resizeGrip.BackgroundTransparency = 1
-        resizeGrip.BorderSizePixel = 0
-        resizeGrip.Size = UDim2.new(0, 20, 0, 20)
-        resizeGrip.Position = UDim2.new(1, -20, 1, -20)
-        resizeGrip.Parent = main
-        local resizing = false
-        local startSize
-        local startInputPos
-        resizeGrip.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                resizing = true
-                startSize = main.Size
-                startInputPos = input.Position
-            end
-        end)
-        UserInputService.InputChanged:Connect(function(input)
-            if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
-                local delta = input.Position - startInputPos
-                local newWidth = startSize.X.Offset + delta.X
-                local newHeight = startSize.Y.Offset + delta.Y
-                newWidth = math.max(420, newWidth)
-                newHeight = math.max(360, newHeight)
-                main.Size = UDim2.new(0, newWidth, 0, newHeight)
-            end
-        end)
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                resizing = false
-            end
-        end)
-    end
+    makeResizable(main)
     local top = Instance.new("Frame")
     top.Name = "TopBar"
     top.Size = UDim2.new(1, 0, 0, 52)
@@ -624,7 +636,7 @@ function Buster:CreateWindow(options)
     end
     if Camera and (not forcedSize or isPhone()) then
         Camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
-            if minimized then
+            if minimized or fullscreen then
                 return
             end
             local w, h = computeWindowSize()
@@ -767,7 +779,7 @@ function Buster:CreateWindow(options)
     end
     applySubLayout()
     main:GetPropertyChangedSignal("Size"):Connect(function()
-        if minimized then
+        if minimized or fullscreen then
             return
         end
         applySubLayout()
@@ -1696,7 +1708,7 @@ function Buster:CreateWindow(options)
     notifyLayout.Parent = notifyHost
     function window:Notify(opt)
         opt = opt or {}
-        local n = nTitle = opt.Title or titleText
+        local nTitle = opt.Title or titleText
         local nText = opt.Text or ""
         local duration = opt.Duration or 2.5
         local toast = Instance.new("Frame")
@@ -1777,7 +1789,7 @@ function Buster:CreateWindow(options)
         local settingsTab = window:CreateTab("Settings")
         settingsTab._button.LayoutOrder = 99999
         local panel = settingsTab:CreatePanel({ Column = "Left", Title = "Settings" })
-        panel:CreateKeybind({
+        local keybind = panel:CreateKeybind({
             Name = "Toggle UI Key",
             Default = defaultToggleKey,
             Callback = function(key)
@@ -1789,6 +1801,23 @@ function Buster:CreateWindow(options)
                     window:Notify({ Title = titleText, Text = "Toggle key cleared", Duration = 1.5 })
                 end
             end,
+        })
+        panel:Divider()
+        panel:CreateButton({
+            Name = "Save Config",
+            Callback = function()
+                local data = {
+                    toggle_key = window._toggleKey.Name,
+                    accent = {
+                        r = math.floor(Theme.Accent.R * 255),
+                        g = math.floor(Theme.Accent.G * 255),
+                        b = math.floor(Theme.Accent.B * 255),
+                    }
+                }
+                local json = HttpService:JSONEncode(data)
+                writefile(configFile, json)
+                window:Notify({ Title = titleText, Text = "Config saved to " .. configFile, Duration = 2.5 })
+            end
         })
     end
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -1999,17 +2028,15 @@ function Buster:CreateHomeTab(window, options)
     avatarImg.Parent = avatarWrap
     applyCorner(avatarImg, 27)
     task.spawn(function()
-        task.spawn(function()
-            pcall(function()
-                local lp = Players.LocalPlayer
-                if not (lp and lp.UserId) then
-                    return
-                end
-                local thumb = Players:GetUserThumbnailAsync(lp.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-                if avatarImg and avatarImg.Parent then
-                    avatarImg.Image = thumb
-                end
-            end)
+        pcall(function()
+            local lp = Players.LocalPlayer
+            if not (lp and lp.UserId) then
+                return
+            end
+            local thumb = Players:GetUserThumbnailAsync(lp.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+            if avatarImg and avatarImg.Parent then
+                avatarImg.Image = thumb
+            end
         end)
     end)
     local welcomeTitle = createText(welcomeContent, "Welcome, " .. tostring((Players.LocalPlayer and Players.LocalPlayer.DisplayName) or "User"), 18, true, Theme.Text)
@@ -2228,6 +2255,22 @@ function Buster:CreateHomeTab(window, options)
             return 0
         end
         table.insert(
+            connections,
+            RunService.Heartbeat:Connect(function()
+                if destroyed then
+                    return
+                end
+                fpsCounter += 1
+                local now = tick()
+                if now - lastFpsUpdate >= 1 then
+                    local pingMs = getPingMs()
+                    valLatency.Text = tostring(fpsCounter) .. " FPS\n" .. tostring(pingMs) .. "ms"
+                    valTime.Text = formatElapsed(now - startTick)
+                    fpsCounter = 0
+                    lastFpsUpdate = now
+                end
+            end)
+        )
             connections,
             RunService.Heartbeat:Connect(function()
                 if destroyed then
