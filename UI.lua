@@ -1,4 +1,5 @@
 local Buster = {}
+
 if not gethui then
     getfenv().gethui = function() return game:GetService("CoreGui") end
 end
