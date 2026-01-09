@@ -1,44 +1,63 @@
 local Buster = {}
-
 if not gethui then
-    getfenv().gethui = function() return game:GetService("CoreGui") end
+    if getfenv then
+        getfenv().gethui = function() return game:GetService("CoreGui") end
+    end
 end
 if not syn then
-    getfenv().syn = {}
+    if getfenv then
+        getfenv().syn = {}
+    end
 end
 if not identifyexecutor then
-    getfenv().identifyexecutor = function()
-        if getexecutorname then
-            return getexecutorname()
+    if getfenv then
+        getfenv().identifyexecutor = function()
+            if getexecutorname then
+                return getexecutorname()
+            end
+            return "Unknown"
         end
-        return "Unknown"
     end
 end
 if not getexecutorname then
-    getfenv().getexecutorname = function()
-        if identifyexecutor then
-            return identifyexecutor()
+    if getfenv then
+        getfenv().getexecutorname = function()
+            if identifyexecutor then
+                return identifyexecutor()
+            end
+            return "Unknown"
         end
-        return "Unknown"
     end
 end
 if not request then
-    getfenv().request = function() return {Success = false, StatusCode = 404} end
+    if getfenv then
+        getfenv().request = function() return {Success = false, StatusCode = 404} end
+    end
 end
 if not isnetworkowner then
-    getfenv().isnetworkowner = function() return true end
+    if getfenv then
+        getfenv().isnetworkowner = function() return true end
+    end
 end
 if not setscriptable then
-    getfenv().setscriptable = function() end
+    if getfenv then
+        getfenv().setscriptable = function() end
+    end
 end
 if not getconnections then
-    getfenv().getconnections = function() return {} end
+    if getfenv then
+        getfenv().getconnections = function() return {} end
+    end
 end
 if not firesignal then
-    getfenv().firesignal = function() end
+    if getfenv then
+        getfenv().firesignal = function() end
+    end
 end
 if not fireproximityprompt then
-    getfenv().fireproximityprompt = function() end
+    if getfenv then
+        getfenv().fireproximityprompt = function() end
+    end
 end
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -1980,15 +1999,17 @@ function Buster:CreateHomeTab(window, options)
     avatarImg.Parent = avatarWrap
     applyCorner(avatarImg, 27)
     task.spawn(function()
-        pcall(function()
-            local lp = Players.LocalPlayer
-            if not (lp and lp.UserId) then
-                return
-            end
-            local thumb = Players:GetUserThumbnailAsync(lp.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-            if avatarImg and avatarImg.Parent then
-                avatarImg.Image = thumb
-            end
+        task.spawn(function()
+            pcall(function()
+                local lp = Players.LocalPlayer
+                if not (lp and lp.UserId) then
+                    return
+                end
+                local thumb = Players:GetUserThumbnailAsync(lp.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+                if avatarImg and avatarImg.Parent then
+                    avatarImg.Image = thumb
+                end
+            end)
         end)
     end)
     local welcomeTitle = createText(welcomeContent, "Welcome, " .. tostring((Players.LocalPlayer and Players.LocalPlayer.DisplayName) or "User"), 18, true, Theme.Text)
@@ -2274,13 +2295,11 @@ function Buster:CreateHomeTab(window, options)
         grid.BorderSizePixel = 0
         grid.Size = UDim2.new(1, 0, 1, 0)
         grid.Parent = friendsBody
-
         local gridLayout = Instance.new("UIGridLayout")
         gridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
         gridLayout.CellSize = UDim2.new(0.5, -5, 0, 56)
         gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
         gridLayout.Parent = grid
-
         local function friendTile(titleText)
             local tile = Instance.new("Frame")
             tile.Name = "HomeFriendTile"
@@ -2289,7 +2308,6 @@ function Buster:CreateHomeTab(window, options)
             tile.Parent = grid
             applyCorner(tile, 10)
             applyStroke(tile, Theme.StrokeSoft, 0.7)
-
             local p = Instance.new("UIPadding")
             p.Name = "HomeFriendPad"
             p.PaddingTop = UDim.new(0, 8)
@@ -2297,7 +2315,6 @@ function Buster:CreateHomeTab(window, options)
             p.PaddingRight = UDim.new(0, 10)
             p.PaddingBottom = UDim.new(0, 8)
             p.Parent = tile
-
             local title = createText(tile, titleText, 11, true, Theme.Text)
             title.Size = UDim2.new(1, 0, 0, 16)
             local value = createText(tile, "0 friends", 11, false, Theme.SubText)
@@ -2307,12 +2324,10 @@ function Buster:CreateHomeTab(window, options)
             value.TextYAlignment = Enum.TextYAlignment.Top
             return value
         end
-
         local inServerLabel = friendTile("In Server")
         local offlineLabel = friendTile("Offline")
         local onlineLabel = friendTile("Online")
         local totalLabel = friendTile("Total")
-
         local friendsCooldown = 0
         local function checkFriends()
             if friendsCooldown > 0 then
@@ -2320,20 +2335,16 @@ function Buster:CreateHomeTab(window, options)
                 return
             end
             friendsCooldown = 25
-
             local lp = Players.LocalPlayer
             if not (lp and lp.UserId) then
                 return
             end
-
             local total = 0
             local online = 0
             local inServer = 0
-
             pcall(function()
                 online = #lp:GetFriendsOnline()
             end)
-
             pcall(function()
                 local playersFriends = {}
                 local list = Players:GetFriendsAsync(lp.UserId)
@@ -2347,22 +2358,18 @@ function Buster:CreateHomeTab(window, options)
                     end
                     list:AdvanceToNextPageAsync()
                 end
-
                 for _, data in ipairs(playersFriends) do
                     if Players:FindFirstChild(data.Username) then
                         inServer += 1
                     end
                 end
             end)
-
             local offline = math.max(0, total - online)
-
             inServerLabel.Text = tostring(inServer) .. " friends"
             offlineLabel.Text = tostring(offline) .. " friends"
             onlineLabel.Text = tostring(online) .. " friends"
             totalLabel.Text = tostring(total) .. " friends"
         end
-
         checkFriends()
         table.insert(
             connections,
@@ -2374,10 +2381,7 @@ function Buster:CreateHomeTab(window, options)
             end)
         )
     end
-
     return homeTab
 end
-
 Buster.BronxUI = Buster
-
 return Buster
